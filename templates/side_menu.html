@@ -1,0 +1,28 @@
+<!-- Боковое меню навигации с унифицированным стилем -->
+<div class="side-menu">
+    <a class="{% if request.path == '/holdings' %}active{% endif %}" href="/holdings">
+        <i class="fas fa-building"></i> Новости Холдингов
+    </a>
+    <a class="{% if request.path == '/competitors' %}active{% endif %}" href="/competitors">
+        <i class="fas fa-industry"></i> Новости Конкурентов
+    </a>
+    <a class="{% if request.path == '/qr' %}active{% endif %}" href="/qr">
+        <i class="fas fa-qrcode"></i> QR-код
+    </a>
+    <a class="{% if request.path == '/ai' %}active{% endif %}" href="{{ url_for('ai') }}">
+        <i class="fas fa-robot"></i> AI
+    </a>
+    <a class="{% if request.path == '/analytics' %}active{% endif %}" href="/analytics">
+        <i class="fas fa-chart-pie"></i> Аналитика
+    </a>
+    {% if current_user.is_authenticated and (current_user.is_admin or 'руководитель' in current_user.position.lower()) %}
+    <a class="{% if request.path == '/dashboard' %}active{% endif %}" href="/dashboard">
+        <i class="fas fa-tachometer-alt"></i> Дашборды
+    </a>
+    {% endif %}
+    {% if current_user.is_authenticated and current_user.is_admin %}
+    <a class="{% if request.path == '/admin' %}active{% endif %}" href="/admin">
+        <i class="fas fa-user-shield"></i> Панель администратора
+    </a>
+    {% endif %}
+</div> 

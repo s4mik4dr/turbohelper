@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Вход{% endblock %}
+
+{% block content %}
+<div class="auth-card">
+    <div class="auth-card-header">
+        <h2 class="auth-title">Вход в систему</h2>
+        <p class="auth-subtitle">Войдите в свой аккаунт, чтобы получить доступ ко всем функциям</p>
+    </div>
+    <div class="auth-card-body">
+        <form class="auth-form" method="POST" action="">
+            {{ form.hidden_tag() }}
+            
+            <div class="mb-3">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                    {{ form.email(class="form-control", placeholder="Ваш email") }}
+                </div>
+                {% if form.email.errors %}
+                    <div class="invalid-feedback d-block">
+                        {% for error in form.email.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="mb-3">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                    {{ form.password(class="form-control", placeholder="Пароль") }}
+                </div>
+                {% if form.password.errors %}
+                    <div class="invalid-feedback d-block">
+                        {% for error in form.password.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="mb-3 form-check">
+                {{ form.remember(class="form-check-input") }}
+                {{ form.remember.label(class="form-check-label") }}
+            </div>
+            
+            <div class="d-grid gap-2">
+                {{ form.submit(class="btn btn-primary") }}
+            </div>
+        </form>
+        
+        <div class="auth-links">
+            <p>Еще не зарегистрированы? <a href="{{ url_for('register') }}">Создать аккаунт</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %} 

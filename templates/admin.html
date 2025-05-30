@@ -1,0 +1,897 @@
+{% extends "base.html" %}
+{% block title %}Панель администратора{% endblock %}
+
+{% block additional_head %}
+<style>
+    .admin-header {
+        margin-bottom: 2rem;
+    }
+    
+    .admin-card {
+        margin-bottom: 2rem;
+        border: none;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.05);
+        transition: all 0.3s;
+    }
+    
+    .admin-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.1);
+    }
+    
+    .admin-card .card-header {
+        font-weight: 600;
+        background-color: rgba(var(--bs-primary-rgb), 0.1);
+        border: none;
+    }
+    
+    .table-users {
+        font-size: 0.95rem;
+    }
+    
+    .user-action-btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.8rem;
+    }
+    
+    .permission-badge {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+    }
+    
+    .admin-tab-content {
+        padding: 2rem 0;
+    }
+    
+    .feature-list {
+        list-style: none;
+        padding: 0;
+    }
+    
+    .feature-list li {
+        margin-bottom: 0.5rem;
+        padding: 0.5rem;
+        border-radius: 0.25rem;
+        background-color: rgba(var(--bs-light-rgb), 0.5);
+    }
+    
+    .feature-list .form-check {
+        margin: 0;
+    }
+    
+    /* Стили для функций с включенным/выключенным доступом */
+    .feature-enabled {
+        background-color: rgba(var(--bs-success-rgb), 0.1) !important;
+        border-left: 3px solid var(--bs-success);
+    }
+    
+    .feature-disabled {
+        background-color: rgba(var(--bs-danger-rgb), 0.1) !important;
+        border-left: 3px solid var(--bs-danger);
+    }
+    
+    /* Добавляем индикатор статуса */
+    .status-indicator {
+        font-size: 0.75rem;
+        padding: 0.2rem 0.5rem;
+        border-radius: 0.25rem;
+        margin-left: 0.5rem;
+    }
+    
+    .status-enabled {
+        background-color: var(--bs-success);
+        color: white;
+    }
+    
+    .status-disabled {
+        background-color: var(--bs-danger);
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-page">
+    <div class="admin-header">
+        <h2><i class="fas fa-user-shield me-2"></i>Панель администратора</h2>
+        <p class="text-muted">Управление пользователями и функциями системы</p>
+    </div>
+    
+    <ul class="nav nav-tabs" id="adminTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="users-tab" data-bs-toggle="tab" data-bs-target="#users-tab-content" type="button" role="tab" aria-controls="users-tab-content" aria-selected="true">
+                <i class="fas fa-users me-2"></i>Пользователи
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="features-tab" data-bs-toggle="tab" data-bs-target="#features-tab-content" type="button" role="tab" aria-controls="features-tab-content" aria-selected="false">
+                <i class="fas fa-puzzle-piece me-2"></i>Функции системы
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="logs-tab" data-bs-toggle="tab" data-bs-target="#logs-tab-content" type="button" role="tab" aria-controls="logs-tab-content" aria-selected="false">
+                <i class="fas fa-list-alt me-2"></i>Журнал действий
+            </button>
+        </li>
+    </ul>
+    
+    <div class="tab-content admin-tab-content" id="adminTabsContent">
+        <!-- Вкладка Пользователи -->
+        <div class="tab-pane fade show active" id="users-tab-content" role="tabpanel" aria-labelledby="users-tab">
+            <div class="card admin-card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span><i class="fas fa-users me-2"></i>Управление пользователями</span>
+                    <div class="input-group" style="width: 300px;">
+                        <input type="text" class="form-control" id="userSearchInput" placeholder="Поиск пользователя...">
+                        <button class="btn btn-outline-primary" type="button"><i class="fas fa-search"></i></button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-users" id="usersTable">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Фото</th>
+                                    <th>Имя и фамилия</th>
+                                    <th>Email</th>
+                                    <th>Отдел</th>
+                                    <th>Должность</th>
+                                    <th>Роль</th>
+                                    <th>Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in users %}
+                                <tr>
+                                    <td>{{ user.id }}</td>
+                                    <td>
+                                        <img src="{{ url_for('profile_pics', filename=user.profile_image) }}" alt="Фото профиля" class="rounded-circle" width="40" height="40">
+                                    </td>
+                                    <td>{{ user.first_name }} {{ user.last_name }}</td>
+                                    <td>{{ user.email }}</td>
+                                    <td>{{ user.department }}</td>
+                                    <td>{{ user.position }}</td>
+                                    <td>
+                                        {% if user.is_admin %}
+                                            <span class="badge bg-primary permission-badge">Администратор</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary permission-badge">Пользователь</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <button type="button" class="btn btn-sm btn-outline-primary user-action-btn edit-user-btn" data-user-id="{{ user.id }}">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-warning user-action-btn toggle-admin-btn" data-user-id="{{ user.id }}" data-is-admin="{{ user.is_admin|int }}">
+                                                {% if user.is_admin %}
+                                                    <i class="fas fa-user-minus"></i>
+                                                {% else %}
+                                                    <i class="fas fa-user-plus"></i>
+                                                {% endif %}
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger user-action-btn delete-user-btn" data-user-id="{{ user.id }}">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Вкладка Функции системы -->
+        <div class="tab-pane fade" id="features-tab-content" role="tabpanel" aria-labelledby="features-tab">
+            <div class="card admin-card">
+                <div class="card-header">
+                    <i class="fas fa-puzzle-piece me-2"></i>Управление доступом к функциям
+                </div>
+                <div class="card-body">
+                    <form id="featureAccessForm">
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="userSelector" class="form-label">Выберите пользователя или отдел</label>
+                                    <select class="form-select" id="userSelector">
+                                        <option value="" selected>Выберите пользователя или отдел</option>
+                                        <optgroup label="Отделы">
+                                            {% for department in departments %}
+                                            <option value="department:{{ department }}">{{ department }}</option>
+                                            {% endfor %}
+                                        </optgroup>
+                                        <optgroup label="Пользователи">
+                                            {% for user in users %}
+                                            <option value="user:{{ user.id }}">{{ user.first_name }} {{ user.last_name }} ({{ user.email }})</option>
+                                            {% endfor %}
+                                        </optgroup>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <h5 class="mb-3">Доступные функции</h5>
+                        <ul class="feature-list">
+                            <li id="holdingsItem">
+                                <div class="form-check form-switch d-flex align-items-center">
+                                    <input class="form-check-input" type="checkbox" id="featureHoldings" checked>
+                                    <label class="form-check-label" for="featureHoldings">Новости Холдингов</label>
+                                    <span class="status-indicator" id="holdingsStatus"></span>
+                                </div>
+                            </li>
+                            <li id="competitorsItem">
+                                <div class="form-check form-switch d-flex align-items-center">
+                                    <input class="form-check-input" type="checkbox" id="featureCompetitors" checked>
+                                    <label class="form-check-label" for="featureCompetitors">Новости Конкурентов</label>
+                                    <span class="status-indicator" id="competitorsStatus"></span>
+                                </div>
+                            </li>
+                            <li id="qrItem">
+                                <div class="form-check form-switch d-flex align-items-center">
+                                    <input class="form-check-input" type="checkbox" id="featureQR" checked>
+                                    <label class="form-check-label" for="featureQR">QR-код</label>
+                                    <span class="status-indicator" id="qrStatus"></span>
+                                </div>
+                            </li>
+                            <li id="aiItem">
+                                <div class="form-check form-switch d-flex align-items-center">
+                                    <input class="form-check-input" type="checkbox" id="featureAI" checked>
+                                    <label class="form-check-label" for="featureAI">Нейросети</label>
+                                    <span class="status-indicator" id="aiStatus"></span>
+                                </div>
+                            </li>
+                            <li id="analyticsItem">
+                                <div class="form-check form-switch d-flex align-items-center">
+                                    <input class="form-check-input" type="checkbox" id="featureAnalytics" checked>
+                                    <label class="form-check-label" for="featureAnalytics">Аналитика</label>
+                                    <span class="status-indicator" id="analyticsStatus"></span>
+                                </div>
+                            </li>
+                            <li id="dashboardItem">
+                                <div class="form-check form-switch d-flex align-items-center">
+                                    <input class="form-check-input" type="checkbox" id="featureDashboard" checked>
+                                    <label class="form-check-label" for="featureDashboard">Дашборды</label>
+                                    <span class="status-indicator" id="dashboardStatus"></span>
+                                </div>
+                            </li>
+                        </ul>
+                        
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-primary">Сохранить настройки доступа</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Сводка настроек доступа -->
+            <div class="card admin-card mt-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span><i class="fas fa-table me-2"></i>Сводка настроек доступа</span>
+                    <button class="btn btn-sm btn-outline-primary" id="refreshAccessSummary">
+                        <i class="fas fa-sync-alt"></i> Обновить
+                    </button>
+                </div>
+                <div class="card-body">
+                    <!-- Вкладки для отделов и пользователей -->
+                    <ul class="nav nav-tabs" id="accessSummaryTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="department-tab" data-bs-toggle="tab" data-bs-target="#department-content" type="button" role="tab">
+                                Отделы
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="user-tab" data-bs-toggle="tab" data-bs-target="#user-content" type="button" role="tab">
+                                Пользователи
+                            </button>
+                        </li>
+                    </ul>
+                    
+                    <div class="tab-content mt-3" id="accessSummaryTabContent">
+                        <!-- Вкладка для отделов -->
+                        <div class="tab-pane fade show active" id="department-content" role="tabpanel">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover" id="departmentAccessTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Отдел</th>
+                                            <th>Холдинги</th>
+                                            <th>Конкуренты</th>
+                                            <th>QR-код</th>
+                                            <th>Нейросети</th>
+                                            <th>Аналитика</th>
+                                            <th>Дашборды</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Данные будут загружены JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- Вкладка для пользователей -->
+                        <div class="tab-pane fade" id="user-content" role="tabpanel">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover" id="userAccessTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Пользователь</th>
+                                            <th>Холдинги</th>
+                                            <th>Конкуренты</th>
+                                            <th>QR-код</th>
+                                            <th>Нейросети</th>
+                                            <th>Аналитика</th>
+                                            <th>Дашборды</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Данные будут загружены JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Вкладка Журнал -->
+        <div class="tab-pane fade" id="logs-tab-content" role="tabpanel" aria-labelledby="logs-tab">
+            <div class="card admin-card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span><i class="fas fa-list-alt me-2"></i>Журнал действий пользователей</span>
+                    <div class="d-flex">
+                        <input type="date" class="form-control form-control-sm me-2" id="logStartDate">
+                        <input type="date" class="form-control form-control-sm" id="logEndDate">
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover" id="logsTable">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Дата и время</th>
+                                    <th>Пользователь</th>
+                                    <th>Действие</th>
+                                    <th>IP-адрес</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if logs %}
+                                    {% for log in logs %}
+                                    <tr>
+                                        <td>{{ log.id }}</td>
+                                        <td>{{ log.timestamp }}</td>
+                                        <td>{{ log.user_email }}</td>
+                                        <td>{{ log.action }}</td>
+                                        <td>{{ log.ip_address }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="5" class="text-center">Записи журнала отсутствуют</td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно редактирования пользователя -->
+<div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editUserModalLabel">Редактирование пользователя</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editUserForm">
+                    <input type="hidden" id="editUserId">
+                    <div class="mb-3">
+                        <label for="editFirstName" class="form-label">Имя</label>
+                        <input type="text" class="form-control" id="editFirstName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editLastName" class="form-label">Фамилия</label>
+                        <input type="text" class="form-control" id="editLastName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editEmail" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="editEmail" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editDepartment" class="form-label">Отдел</label>
+                        <input type="text" class="form-control" id="editDepartment" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editPosition" class="form-label">Должность</label>
+                        <input type="text" class="form-control" id="editPosition" required>
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="editIsAdmin">
+                        <label class="form-check-label" for="editIsAdmin">Администратор</label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" id="saveUserBtn">Сохранить</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно подтверждения удаления -->
+<div class="modal fade" id="deleteUserModal" tabindex="-1" aria-labelledby="deleteUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteUserModalLabel">Подтверждение удаления</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Вы действительно хотите удалить этого пользователя?</p>
+                <p class="fw-bold text-danger">Это действие невозможно отменить.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Удалить</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Управление пользователями
+        const editButtons = document.querySelectorAll('.edit-user-btn');
+        const deleteButtons = document.querySelectorAll('.delete-user-btn');
+        const toggleAdminButtons = document.querySelectorAll('.toggle-admin-btn');
+        const saveUserBtn = document.getElementById('saveUserBtn');
+        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+        
+        let currentUserId = null;
+        
+        // Обработка кнопок редактирования
+        editButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const userId = this.getAttribute('data-user-id');
+                currentUserId = userId;
+                
+                // Получаем данные пользователя
+                fetch(`/api/admin/user/${userId}`)
+                    .then(response => response.json())
+                    .then(user => {
+                        document.getElementById('editUserId').value = user.id;
+                        document.getElementById('editFirstName').value = user.first_name;
+                        document.getElementById('editLastName').value = user.last_name;
+                        document.getElementById('editEmail').value = user.email;
+                        document.getElementById('editDepartment').value = user.department;
+                        document.getElementById('editPosition').value = user.position;
+                        document.getElementById('editIsAdmin').checked = user.is_admin;
+                        
+                        const modal = new bootstrap.Modal(document.getElementById('editUserModal'));
+                        modal.show();
+                    })
+                    .catch(error => {
+                        console.error('Ошибка при получении данных пользователя:', error);
+                        alert('Не удалось загрузить данные пользователя');
+                    });
+            });
+        });
+        
+        // Обработка кнопок удаления
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const userId = this.getAttribute('data-user-id');
+                currentUserId = userId;
+                
+                const modal = new bootstrap.Modal(document.getElementById('deleteUserModal'));
+                modal.show();
+            });
+        });
+        
+        // Обработка кнопок переключения статуса администратора
+        toggleAdminButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const userId = this.getAttribute('data-user-id');
+                const isAdmin = this.getAttribute('data-is-admin') === '1';
+                
+                fetch('/api/admin/toggle-admin', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        user_id: userId,
+                        is_admin: !isAdmin
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.reload();
+                    } else {
+                        alert('Ошибка: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Ошибка при изменении статуса администратора:', error);
+                    alert('Не удалось изменить статус администратора');
+                });
+            });
+        });
+        
+        // Сохранение изменений пользователя
+        saveUserBtn.addEventListener('click', function() {
+            const userId = document.getElementById('editUserId').value;
+            const userData = {
+                first_name: document.getElementById('editFirstName').value,
+                last_name: document.getElementById('editLastName').value,
+                email: document.getElementById('editEmail').value,
+                department: document.getElementById('editDepartment').value,
+                position: document.getElementById('editPosition').value,
+                is_admin: document.getElementById('editIsAdmin').checked
+            };
+            
+            fetch(`/api/admin/user/${userId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(userData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.reload();
+                } else {
+                    alert('Ошибка: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка при обновлении данных пользователя:', error);
+                alert('Не удалось обновить данные пользователя');
+            });
+        });
+        
+        // Подтверждение удаления пользователя
+        confirmDeleteBtn.addEventListener('click', function() {
+            fetch(`/api/admin/user/${currentUserId}`, {
+                method: 'DELETE'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.reload();
+                } else {
+                    alert('Ошибка: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка при удалении пользователя:', error);
+                alert('Не удалось удалить пользователя');
+            });
+        });
+        
+        // Поиск пользователей
+        const userSearchInput = document.getElementById('userSearchInput');
+        userSearchInput.addEventListener('input', function() {
+            const searchText = this.value.toLowerCase();
+            const rows = document.querySelectorAll('#usersTable tbody tr');
+            
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                if (text.includes(searchText)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+        
+        // Управление доступом к функциям
+        const featureAccessForm = document.getElementById('featureAccessForm');
+        const userSelector = document.getElementById('userSelector');
+        
+        // Функция для обновления визуального статуса функций
+        function updateFeatureStatus() {
+            // Список всех функций и их элементов
+            const features = [
+                { name: 'holdings', checkbox: 'featureHoldings', item: 'holdingsItem', status: 'holdingsStatus' },
+                { name: 'competitors', checkbox: 'featureCompetitors', item: 'competitorsItem', status: 'competitorsStatus' },
+                { name: 'qr', checkbox: 'featureQR', item: 'qrItem', status: 'qrStatus' },
+                { name: 'ai', checkbox: 'featureAI', item: 'aiItem', status: 'aiStatus' },
+                { name: 'analytics', checkbox: 'featureAnalytics', item: 'analyticsItem', status: 'analyticsStatus' },
+                { name: 'dashboard', checkbox: 'featureDashboard', item: 'dashboardItem', status: 'dashboardStatus' }
+            ];
+            
+            // Обновляем визуальный статус для каждой функции
+            features.forEach(feature => {
+                const checkbox = document.getElementById(feature.checkbox);
+                const item = document.getElementById(feature.item);
+                const status = document.getElementById(feature.status);
+                
+                if (checkbox.checked) {
+                    item.classList.add('feature-enabled');
+                    item.classList.remove('feature-disabled');
+                    status.textContent = 'Включено';
+                    status.classList.add('status-enabled');
+                    status.classList.remove('status-disabled');
+                } else {
+                    item.classList.add('feature-disabled');
+                    item.classList.remove('feature-enabled');
+                    status.textContent = 'Выключено';
+                    status.classList.add('status-disabled');
+                    status.classList.remove('status-enabled');
+                }
+            });
+        }
+        
+        // Обновляем статус при изменении любого чекбокса
+        document.getElementById('featureHoldings').addEventListener('change', updateFeatureStatus);
+        document.getElementById('featureCompetitors').addEventListener('change', updateFeatureStatus);
+        document.getElementById('featureQR').addEventListener('change', updateFeatureStatus);
+        document.getElementById('featureAI').addEventListener('change', updateFeatureStatus);
+        document.getElementById('featureAnalytics').addEventListener('change', updateFeatureStatus);
+        document.getElementById('featureDashboard').addEventListener('change', updateFeatureStatus);
+        
+        // Загрузка настроек доступа при выборе пользователя или отдела
+        userSelector.addEventListener('change', function() {
+            if (!this.value) return;
+            
+            // Сбрасываем все чекбоксы в состояние "включено" по умолчанию
+            document.getElementById('featureHoldings').checked = true;
+            document.getElementById('featureCompetitors').checked = true;
+            document.getElementById('featureQR').checked = true;
+            document.getElementById('featureAI').checked = true;
+            document.getElementById('featureAnalytics').checked = true;
+            document.getElementById('featureDashboard').checked = true;
+            
+            // Обновляем визуальный статус
+            updateFeatureStatus();
+            
+            // Получаем текущие настройки доступа
+            fetch('/api/admin/get-feature-access?target=' + encodeURIComponent(this.value))
+                .then(response => response.json())
+                .then(data => {
+                    if (data.features) {
+                        // Устанавливаем чекбоксы в соответствии с настройками
+                        if ('holdings' in data.features) document.getElementById('featureHoldings').checked = data.features.holdings;
+                        if ('competitors' in data.features) document.getElementById('featureCompetitors').checked = data.features.competitors;
+                        if ('qr' in data.features) document.getElementById('featureQR').checked = data.features.qr;
+                        if ('ai' in data.features) document.getElementById('featureAI').checked = data.features.ai;
+                        if ('analytics' in data.features) document.getElementById('featureAnalytics').checked = data.features.analytics;
+                        if ('dashboard' in data.features) document.getElementById('featureDashboard').checked = data.features.dashboard;
+                        
+                        // Обновляем визуальный статус после загрузки настроек
+                        updateFeatureStatus();
+                    }
+                })
+                .catch(error => {
+                    console.error('Ошибка при загрузке настроек доступа:', error);
+                });
+        });
+        
+        // Инициализируем визуальный статус при загрузке страницы
+        updateFeatureStatus();
+        
+        featureAccessForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const selector = document.getElementById('userSelector');
+            if (!selector.value) {
+                alert('Пожалуйста, выберите пользователя или отдел');
+                return;
+            }
+            
+            const featureAccess = {
+                target: selector.value,
+                features: {
+                    'holdings': document.getElementById('featureHoldings').checked,
+                    'competitors': document.getElementById('featureCompetitors').checked,
+                    'qr': document.getElementById('featureQR').checked,
+                    'ai': document.getElementById('featureAI').checked,
+                    'analytics': document.getElementById('featureAnalytics').checked,
+                    'dashboard': document.getElementById('featureDashboard').checked
+                }
+            };
+            
+            fetch('/api/admin/feature-access', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(featureAccess)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Настройки доступа успешно сохранены');
+                    // Обновляем сводку доступов после сохранения
+                    loadAccessSummary();
+                } else {
+                    alert('Ошибка: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка при сохранении настроек доступа:', error);
+                alert('Не удалось сохранить настройки доступа');
+            });
+        });
+        
+        // Загрузка журнала действий
+        const logStartDate = document.getElementById('logStartDate');
+        const logEndDate = document.getElementById('logEndDate');
+        
+        function loadLogs() {
+            const startDate = logStartDate.value;
+            const endDate = logEndDate.value;
+            
+            fetch('/api/admin/logs', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    start_date: startDate || null,
+                    end_date: endDate || null
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const tbody = document.querySelector('#logsTable tbody');
+                tbody.innerHTML = '';
+                
+                if (data.logs && data.logs.length > 0) {
+                    data.logs.forEach(log => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${log.id}</td>
+                            <td>${log.timestamp}</td>
+                            <td>${log.user_email}</td>
+                            <td>${log.action}</td>
+                            <td>${log.ip_address}</td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                } else {
+                    const row = document.createElement('tr');
+                    row.innerHTML = '<td colspan="5" class="text-center">Записи журнала отсутствуют</td>';
+                    tbody.appendChild(row);
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка при загрузке журнала:', error);
+                alert('Не удалось загрузить журнал действий');
+            });
+        }
+        
+        logStartDate.addEventListener('change', loadLogs);
+        logEndDate.addEventListener('change', loadLogs);
+        
+        // Инициализация вкладок
+        const triggerTabList = [].slice.call(document.querySelectorAll('#adminTabs button'));
+        triggerTabList.forEach(function (triggerEl) {
+            const tabTrigger = new bootstrap.Tab(triggerEl);
+            triggerEl.addEventListener('click', function (event) {
+                event.preventDefault();
+                tabTrigger.show();
+            });
+        });
+        
+        // Функция для загрузки сводки доступов
+        function loadAccessSummary() {
+            fetch('/api/admin/access-summary')
+                .then(response => response.json())
+                .then(data => {
+                    // Заполнение таблицы отделов
+                    const departmentTable = document.getElementById('departmentAccessTable').querySelector('tbody');
+                    departmentTable.innerHTML = '';
+                    
+                    data.departments.forEach(department => {
+                        const row = document.createElement('tr');
+                        const accessKey = `department:${department}`;
+                        const departmentAccess = data.access_map[accessKey] || {};
+                        
+                        // Имя отдела
+                        const nameCell = document.createElement('td');
+                        nameCell.textContent = department;
+                        row.appendChild(nameCell);
+                        
+                        // Ячейки для каждой функции
+                        const features = ['holdings', 'competitors', 'qr', 'ai', 'analytics', 'dashboard'];
+                        features.forEach(feature => {
+                            const cell = document.createElement('td');
+                            const access = departmentAccess[feature];
+                            
+                            if (access === undefined) {
+                                // По умолчанию доступ разрешен
+                                cell.innerHTML = '<span class="badge bg-success">Включено</span>';
+                            } else if (access) {
+                                cell.innerHTML = '<span class="badge bg-success">Включено</span>';
+                            } else {
+                                cell.innerHTML = '<span class="badge bg-danger">Выключено</span>';
+                            }
+                            
+                            row.appendChild(cell);
+                        });
+                        
+                        departmentTable.appendChild(row);
+                    });
+                    
+                    // Заполнение таблицы пользователей
+                    const userTable = document.getElementById('userAccessTable').querySelector('tbody');
+                    userTable.innerHTML = '';
+                    
+                    data.users.forEach(user => {
+                        const row = document.createElement('tr');
+                        const accessKey = `user:${user.id}`;
+                        const userAccess = data.access_map[accessKey] || {};
+                        
+                        // Имя пользователя
+                        const nameCell = document.createElement('td');
+                        nameCell.textContent = `${user.name} (${user.email})`;
+                        row.appendChild(nameCell);
+                        
+                        // Ячейки для каждой функции
+                        const features = ['holdings', 'competitors', 'qr', 'ai', 'analytics', 'dashboard'];
+                        features.forEach(feature => {
+                            const cell = document.createElement('td');
+                            const access = userAccess[feature];
+                            
+                            if (access === undefined) {
+                                // Если нет записи для пользователя, проверяем запись для его отдела
+                                const userObj = data.users.find(u => u.id === user.id);
+                                if (userObj) {
+                                    const departmentKey = `department:${userObj.department}`;
+                                    const departmentAccess = data.access_map[departmentKey] || {};
+                                    
+                                    if (departmentAccess[feature] === false) {
+                                        cell.innerHTML = '<span class="badge bg-danger">Выключено</span>';
+                                    } else {
+                                        // По умолчанию доступ разрешен
+                                        cell.innerHTML = '<span class="badge bg-success">Включено</span>';
+                                    }
+                                } else {
+                                    // По умолчанию доступ разрешен
+                                    cell.innerHTML = '<span class="badge bg-success">Включено</span>';
+                                }
+                            } else if (access) {
+                                cell.innerHTML = '<span class="badge bg-success">Включено</span>';
+                            } else {
+                                cell.innerHTML = '<span class="badge bg-danger">Выключено</span>';
+                            }
+                            
+                            row.appendChild(cell);
+                        });
+                        
+                        userTable.appendChild(row);
+                    });
+                })
+                .catch(error => {
+                    console.error('Ошибка при загрузке сводки доступов:', error);
+                    alert('Не удалось загрузить сводку доступов');
+                });
+        }
+        
+        // Кнопка обновления сводки доступов
+        document.getElementById('refreshAccessSummary').addEventListener('click', loadAccessSummary);
+        
+        // Загружаем сводку при открытии вкладки с функциями
+        document.getElementById('features-tab').addEventListener('click', loadAccessSummary);
+    });
+</script>
+{% endblock %} 

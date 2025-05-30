@@ -1,0 +1,608 @@
+{% extends "base.html" %}
+
+{% block title %}Новости конкурентов{% endblock %}
+
+{% block additional_head %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-datepicker@1.9.0/dist/css/bootstrap-datepicker.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+<style>
+    .competitor-card {
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+        margin-bottom: 20px;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .competitor-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+    }
+    
+    .competitor-header {
+        padding: 15px 20px;
+        background-color: var(--bs-primary);
+        color: white;
+        font-weight: 600;
+    }
+    
+    .competitor-body {
+        padding: 20px;
+        max-height: 500px;
+        overflow-y: auto;
+    }
+    
+    .news-item {
+        padding: 10px 0;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    }
+    
+    .news-item:last-child {
+        border-bottom: none;
+    }
+    
+    .news-date {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #666;
+    }
+    
+    .news-title {
+        margin-top: 5px;
+    }
+    
+    .news-title a {
+        color: var(--bs-primary);
+        text-decoration: none;
+        font-weight: 500;
+    }
+    
+    .news-title a:hover {
+        text-decoration: underline;
+    }
+    
+    .date-filter {
+        background-color: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 30px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        border: 1px solid #dee2e6;
+    }
+    
+    .dark-theme .date-filter {
+        background-color: #343a40;
+        border: 1px solid #495057;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    
+    .dark-theme .date-input::placeholder {
+        color: #adb5bd;
+    }
+    
+    .dark-theme .input-group-text {
+        background-color: #495057;
+        color: #e9ecef;
+        border-color: #6c757d;
+    }
+    
+    .loading-spinner {
+        display: none;
+        text-align: center;
+        padding: 30px;
+    }
+    
+    .export-btn {
+        margin-left: 10px;
+    }
+    
+    @media (max-width: 768px) {
+        .date-filter .row > div {
+            margin-bottom: 15px;
+        }
+        
+        .export-btn {
+            margin-left: 0;
+            margin-top: 15px;
+            width: 100%;
+        }
+    }
+    
+    .tab-content {
+        padding-top: 20px;
+    }
+    
+    /* Стиль для вкладок */
+    .nav-tabs .nav-link {
+        color: #495057;
+        background-color: #f8f9fa;
+        border-color: #dee2e6 #dee2e6 #fff;
+    }
+    
+    .nav-tabs .nav-link.active {
+        color: var(--bs-primary);
+        background-color: #fff;
+        border-color: #dee2e6 #dee2e6 #fff;
+        font-weight: 600;
+    }
+    
+    /* Адаптивные вкладки для мобильных */
+    @media (max-width: 768px) {
+        .nav-tabs {
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            overflow-y: hidden;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .nav-tabs .nav-item {
+            white-space: nowrap;
+        }
+    }
+    
+    .no-news-message {
+        text-align: center;
+        padding: 30px;
+        color: #666;
+    }
+    
+    /* Стили для всплывающего календаря */
+    .datepicker-dropdown {
+        box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+        border-radius: 8px;
+        padding: 10px;
+        margin-top: 5px;
+        z-index: 1060 !important;
+    }
+    
+    .datepicker table tr td.active.active,
+    .datepicker table tr td.active.highlighted.active, 
+    .datepicker table tr td.active.highlighted:active,
+    .datepicker table tr td.active:active {
+        background-color: var(--bs-primary) !important;
+        border-color: var(--bs-primary) !important;
+    }
+    
+    /* Стили для полей и иконок календаря */
+    .calendar-icon {
+        cursor: pointer;
+    }
+    
+    .date-input {
+        cursor: pointer;
+    }
+    
+    /* Улучшенная видимость меток дат */
+    .form-label {
+        font-weight: bold;
+        font-size: 1.05rem;
+        color: #000;
+    }
+    
+    .dark-theme .form-label {
+        color: #fff;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 class="mb-4">Новости конкурентов</h2>
+    
+    <!-- Фильтр по датам -->
+    <div class="date-filter">
+        <div class="row align-items-end">
+            <div class="col-lg-4 col-md-6">
+                <label for="start-date" class="form-label"><i class="bi bi-calendar-event me-1"></i>Дата начала:</label>
+                <div class="input-group">
+                    <span class="input-group-text calendar-icon" id="start-calendar-icon"><i class="bi bi-calendar"></i></span>
+                    <input type="text" class="form-control date-input" id="start-date" placeholder="Выберите дату начала" autocomplete="off" readonly>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <label for="end-date" class="form-label"><i class="bi bi-calendar-event me-1"></i>Дата окончания:</label>
+                <div class="input-group">
+                    <span class="input-group-text calendar-icon" id="end-calendar-icon"><i class="bi bi-calendar"></i></span>
+                    <input type="text" class="form-control date-input" id="end-date" placeholder="Выберите дату окончания" autocomplete="off" readonly>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-12 d-flex">
+                <button id="load-news" class="btn btn-primary">Загрузить новости</button>
+                <button id="export-excel" class="btn btn-outline-success export-btn" disabled>
+                    <i class="bi bi-file-earmark-excel"></i> Экспорт в Excel
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Индикатор загрузки -->
+    <div class="loading-spinner" id="loading-spinner">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Загрузка...</span>
+        </div>
+        <p class="mt-2">Загрузка новостей...</p>
+    </div>
+    
+    <!-- Вкладки с новостями -->
+    <ul class="nav nav-tabs" id="competitors-tabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="all-tab" data-bs-toggle="tab" data-bs-target="#all-content" type="button" role="tab">
+                Все новости
+            </button>
+        </li>
+    </ul>
+    
+    <div class="tab-content" id="competitors-content">
+        <div class="tab-pane fade show active" id="all-content" role="tabpanel">
+            <div class="row" id="news-container">
+                <!-- Здесь будут размещены карточки с новостями -->
+                <div class="col-12 no-news-message">
+                    <p>Выберите даты и нажмите "Загрузить новости"</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap-datepicker@1.9.0/dist/js/bootstrap-datepicker.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap-datepicker@1.9.0/dist/locales/bootstrap-datepicker.ru.min.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Страница загружена, инициализирую компоненты...');
+        
+        // Инициализация календаря для начальной даты
+        $('#start-date').datepicker({
+            format: 'dd.mm.yyyy',
+            language: 'ru',
+            autoclose: true,
+            todayHighlight: true,
+            container: 'body'
+        });
+        
+        // Инициализация календаря для конечной даты
+        $('#end-date').datepicker({
+            format: 'dd.mm.yyyy',
+            language: 'ru',
+            autoclose: true,
+            todayHighlight: true,
+            container: 'body'
+        });
+        
+        // Добавляем обработчики для открытия календаря при клике на иконку
+        $('#start-calendar-icon').click(function() {
+            $('#start-date').datepicker('show');
+        });
+        
+        $('#end-calendar-icon').click(function() {
+            $('#end-date').datepicker('show');
+        });
+        
+        // Добавляем обработчики для открытия календаря при клике на поле ввода
+        $('#start-date').click(function() {
+            $(this).datepicker('show');
+        });
+        
+        $('#end-date').click(function() {
+            $(this).datepicker('show');
+        });
+        
+        // Устанавливаем дату по умолчанию: начало - 1 месяц назад, конец - сегодня
+        const today = new Date();
+        const monthAgo = new Date();
+        monthAgo.setMonth(monthAgo.getMonth() - 1);
+        
+        const formatDate = (date) => {
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+            return `${day}.${month}.${year}`;
+        };
+        
+        // Устанавливаем начальные даты в формате строки
+        $('#start-date').val(formatDate(monthAgo));
+        $('#end-date').val(formatDate(today));
+        
+        console.log('Установлены даты по умолчанию:', formatDate(monthAgo), formatDate(today));
+        
+        // Обработчик нажатия на кнопку загрузки новостей
+        $('#load-news').on('click', function() {
+            console.log('Кнопка загрузки новостей нажата');
+            loadNews();
+        });
+        
+        // Обработчик нажатия на кнопку экспорта в Excel
+        $('#export-excel').on('click', function() {
+            exportToExcel();
+        });
+        
+        // Функция загрузки новостей
+        function loadNews() {
+            const startDate = $('#start-date').val();
+            const endDate = $('#end-date').val();
+            
+            if (!startDate || !endDate) {
+                alert('Пожалуйста, выберите даты начала и окончания');
+                return;
+            }
+            
+            console.log('Загрузка новостей с датами:', startDate, endDate);
+            
+            // Конвертируем даты в формат YYYY-MM-DD для API
+            const formatDateForAPI = (dateStr) => {
+                const [day, month, year] = dateStr.split('.');
+                return `${year}-${month}-${day}`;
+            };
+            
+            const startDateAPI = formatDateForAPI(startDate);
+            const endDateAPI = formatDateForAPI(endDate);
+            
+            console.log('Форматированные даты для API:', startDateAPI, endDateAPI);
+            
+            // Показываем индикатор загрузки
+            $('#loading-spinner').show();
+            $('#news-container').hide();
+            $('#export-excel').prop('disabled', true);
+            
+            // Сбрасываем предыдущие вкладки, кроме "Все новости"
+            $('#competitors-tabs li:not(:first-child)').remove();
+            $('#competitors-content .tab-pane:not(:first-child)').remove();
+            
+            // Очищаем контейнер новостей
+            $('#news-container').empty();
+            
+            // Загружаем новости
+            fetch('/api/load_news', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    start_date: startDateAPI,
+                    end_date: endDateAPI
+                })
+            })
+            .then(response => {
+                console.log('Получен ответ от сервера:', response);
+                if (!response.ok) {
+                    throw new Error('Ошибка сервера: ' + response.status);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Данные получены:', data);
+                // Скрываем индикатор загрузки
+                $('#loading-spinner').hide();
+                $('#news-container').show();
+                
+                // Если есть данные, активируем кнопку экспорта
+                let hasNews = false;
+                
+                // Очищаем контейнер "Все новости"
+                const allNewsContainer = $('#all-content .row');
+                allNewsContainer.empty();
+                
+                // Создаем вкладки для каждого сайта
+                data.forEach((site, index) => {
+                    const siteId = `${site.site.toLowerCase().replace(/\s+/g, '-')}-tab`;
+                    const contentId = `${site.site.toLowerCase().replace(/\s+/g, '-')}-content`;
+                    
+                    // Добавляем вкладку
+                    $('#competitors-tabs').append(`
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="${siteId}" data-bs-toggle="tab" data-bs-target="#${contentId}" type="button" role="tab">
+                                ${site.site}
+                            </button>
+                        </li>
+                    `);
+                    
+                    // Добавляем содержимое вкладки
+                    $('#competitors-content').append(`
+                        <div class="tab-pane fade" id="${contentId}" role="tabpanel">
+                            <div class="row" id="${contentId}-container">
+                                <!-- Здесь будут размещены новости для этого сайта -->
+                            </div>
+                        </div>
+                    `);
+                    
+                    // Проверяем, есть ли новости или ошибка
+                    if (site.error) {
+                        // Отображаем ошибку
+                        $(`#${contentId}-container`).html(`
+                            <div class="col-12">
+                                <div class="alert alert-danger">
+                                    ${site.error}
+                                </div>
+                            </div>
+                        `);
+                    } else if (site.news && site.news.length > 0) {
+                        hasNews = true;
+                        
+                        // Добавляем карточку для сайта на вкладку "Все новости"
+                        allNewsContainer.append(`
+                            <div class="col-lg-6 col-12">
+                                <div class="competitor-card">
+                                    <div class="competitor-header">
+                                        ${site.site}
+                                    </div>
+                                    <div class="competitor-body" id="all-${site.site.toLowerCase().replace(/\s+/g, '-')}-news">
+                                        <!-- Новости будут размещены здесь -->
+                                    </div>
+                                </div>
+                            </div>
+                        `);
+                        
+                        // Заполняем карточку на вкладке "Все новости"
+                        const allSiteNews = $(`#all-${site.site.toLowerCase().replace(/\s+/g, '-')}-news`);
+                        
+                        site.news.forEach(news => {
+                            allSiteNews.append(`
+                                <div class="news-item">
+                                    <div class="news-date">${news.date}</div>
+                                    <div class="news-title">
+                                        <a href="${news.link}" target="_blank" rel="noopener noreferrer">
+                                            ${news.title}
+                                        </a>
+                                    </div>
+                                </div>
+                            `);
+                        });
+                        
+                        // Заполняем вкладку для данного сайта
+                        const siteNewsContainer = $(`#${contentId}-container`);
+                        siteNewsContainer.empty();
+                        
+                        site.news.forEach(news => {
+                            siteNewsContainer.append(`
+                                <div class="col-lg-6 col-12">
+                                    <div class="card mb-3">
+                                        <div class="card-body">
+                                            <div class="text-muted small mb-2">${news.date}</div>
+                                            <h5 class="card-title">
+                                                <a href="${news.link}" target="_blank" rel="noopener noreferrer">
+                                                    ${news.title}
+                                                </a>
+                                            </h5>
+                                        </div>
+                                    </div>
+                                </div>
+                            `);
+                        });
+                    } else {
+                        // Отображаем сообщение об отсутствии новостей
+                        $(`#${contentId}-container`).html(`
+                            <div class="col-12 text-center py-4">
+                                <p class="text-muted">Нет новостей для ${site.site} за выбранный период</p>
+                            </div>
+                        `);
+                        
+                        // Добавляем пустую карточку на вкладку "Все новости"
+                        allNewsContainer.append(`
+                            <div class="col-lg-6 col-12">
+                                <div class="competitor-card">
+                                    <div class="competitor-header">
+                                        ${site.site}
+                                    </div>
+                                    <div class="competitor-body">
+                                        <div class="text-center py-3">
+                                            <p class="text-muted">Нет новостей за выбранный период</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `);
+                    }
+                });
+                
+                // Активируем экспорт, если есть новости
+                $('#export-excel').prop('disabled', !hasNews);
+                
+                // Если в контейнере "Все новости" ничего нет, отображаем сообщение
+                if (allNewsContainer.children().length === 0) {
+                    allNewsContainer.html(`
+                        <div class="col-12 text-center py-4">
+                            <p class="text-muted">Нет новостей за выбранный период</p>
+                        </div>
+                    `);
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка при загрузке новостей:', error);
+                $('#loading-spinner').hide();
+                $('#news-container').show();
+                $('#news-container').html(`
+                    <div class="col-12">
+                        <div class="alert alert-danger">
+                            Произошла ошибка при загрузке новостей: ${error.message}. Пожалуйста, попробуйте позже.
+                        </div>
+                    </div>
+                `);
+            });
+        }
+        
+        // Функция экспорта в Excel
+        function exportToExcel() {
+            const startDate = $('#start-date').val();
+            const endDate = $('#end-date').val();
+            
+            // Показываем индикатор загрузки
+            $('#loading-spinner').show();
+            
+            console.log('Начинаем экспорт в Excel...');
+            
+            // Конвертируем даты в формат YYYY-MM-DD для API
+            const formatDateForAPI = (dateStr) => {
+                const [day, month, year] = dateStr.split('.');
+                return `${year}-${month}-${day}`;
+            };
+            
+            const startDateAPI = formatDateForAPI(startDate);
+            const endDateAPI = formatDateForAPI(endDate);
+            
+            console.log('Отправляем запрос на экспорт с датами:', startDateAPI, endDateAPI);
+            
+            // Отправляем запрос на экспорт в Excel
+            fetch('/api/export_news_excel', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    start_date: startDateAPI,
+                    end_date: endDateAPI,
+                    type: 'competitors'
+                })
+            })
+            .then(response => {
+                console.log('Получен ответ сервера:', response.status, response.statusText);
+                $('#loading-spinner').hide();
+                
+                if (!response.ok) {
+                    if (response.headers.get('Content-Type').includes('application/json')) {
+                        return response.json().then(data => {
+                            throw new Error('Ошибка при экспорте данных: ' + (data.error || 'Неизвестная ошибка'));
+                        });
+                    }
+                    throw new Error('Ошибка при экспорте данных: ' + response.status);
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                console.log('Получен blob:', blob.type, 'размер:', blob.size);
+                
+                // Создаем ссылку для скачивания файла
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = `Новости_конкурентов_${startDate}-${endDate}.xlsx`;
+                
+                // Добавляем элемент в DOM
+                document.body.appendChild(a);
+                
+                // Программно кликаем по ссылке для скачивания
+                console.log('Инициируем скачивание файла');
+                a.click();
+                
+                // Убираем ссылку из DOM
+                setTimeout(() => {
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                    console.log('Скачивание инициировано, элемент удален');
+                }, 100);
+                
+                // Показываем сообщение об успехе
+                alert('Экспорт успешно выполнен. Файл должен начать скачиваться автоматически.');
+            })
+            .catch(error => {
+                $('#loading-spinner').hide();
+                console.error('Ошибка при экспорте в Excel:', error);
+                alert('Произошла ошибка при экспорте данных в Excel: ' + error.message);
+            });
+        }
+    });
+</script>
+{% endblock %} 

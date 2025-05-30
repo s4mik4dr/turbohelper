@@ -1,0 +1,1715 @@
+{% extends "base.html" %}
+
+{% block title %}Новости Холдингов{% endblock %}
+
+{% block content %}
+<style>
+.z-index-10 {
+    z-index: 10;
+}
+.loading-overlay {
+    background-color: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(2px);
+}
+.loading-indicator, #loadingMoreIndicator {
+    background-color: #fff;
+    transition: background-color 0.3s ease;
+}
+.dark-theme .loading-indicator, .dark-theme #loadingMoreIndicator {
+    background-color: #343a40;
+    color: #f8f9fa;
+}
+.dark-theme .loading-indicator p, .dark-theme #loadingMoreIndicator span {
+    color: #adb5bd !important;
+}
+.favorites-panel {
+    background-color: #f8f9fa;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    border: 1px solid #e9ecef;
+    height: 100%;
+}
+.favorites-panel h6 {
+    color: #212529;
+    font-weight: 600;
+}
+.dark-theme .favorites-panel {
+    background-color: #212529;
+    border-color: #343a40;
+    color: #e9ecef;
+}
+.dark-theme .favorites-panel h6 {
+    color: #fff;
+}
+.favorite-channel-btn {
+    background-color: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    padding: 0.5rem 1rem;
+    margin-bottom: 0.5rem;
+    text-align: left;
+    width: 100%;
+    transition: all 0.2s ease;
+    color: #000;
+    font-weight: 500;
+}
+.dark-theme .favorite-channel-btn {
+    background-color: #f8f9fa;
+    border-color: #dee2e6;
+    color: #000;
+}
+.dark-theme .text-muted {
+    color: #adb5bd !important;
+}
+.favorite-channel-btn:hover {
+    background-color: #e9ecef;
+    border-color: #ced4da;
+}
+.dark-theme .favorite-channel-btn:hover {
+    background-color: #e9ecef;
+    border-color: #ced4da;
+}
+.message-item {
+    background-color: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+.dark-theme .message-item {
+    background-color: #343a40;
+    border-color: #495057;
+    color: #e9ecef;
+}
+.message-header {
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #dee2e6;
+}
+.dark-theme .message-header {
+    border-color: #495057;
+}
+.message-date, .message-id {
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+.dark-theme .message-date, 
+.dark-theme .message-id {
+    color: #adb5bd;
+}
+.message-text {
+    margin-bottom: 0.75rem;
+}
+.message-link {
+    font-size: 0.875rem;
+    display: inline-block;
+}
+.dark-theme .message-link {
+    color: #6ea8fe;
+}
+.cache-indicator {
+    background-color: #f8f9fa;
+    color: #212529;
+    border: 1px solid #dee2e6;
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+    border-radius: 0.375rem;
+    display: flex;
+    align-items: center;
+}
+.dark-theme .cache-indicator {
+    background-color: #343a40;
+    color: #e9ecef;
+    border: 1px solid #495057;
+}
+.dark-theme #favoriteChannels p.text-muted {
+    color: #fff !important;
+}
+/* Стили для кнопки удаления из избранного */
+.favorite-channel-item .btn-outline-danger {
+    color: #dc3545;
+    border-color: #dc3545;
+}
+.dark-theme .favorite-channel-item .btn-outline-danger {
+    color: #dc3545;
+    border-color: #dc3545;
+    background-color: #fff;
+}
+.dark-theme .favorite-channel-item .btn-outline-danger:hover {
+    color: #fff;
+    background-color: #dc3545;
+    border-color: #dc3545;
+}
+/* Стили для кнопки копирования */
+.copy-btn {
+    color: #0d6efd;
+    background-color: transparent;
+    border: none;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.copy-btn:hover {
+    background-color: rgba(13, 110, 253, 0.1);
+    color: #0a58ca;
+}
+.dark-theme .copy-btn {
+    color: #6ea8fe;
+}
+.dark-theme .copy-btn:hover {
+    background-color: rgba(110, 168, 254, 0.2);
+    color: #8bb9fe;
+}
+/* Стили для мобильных устройств */
+@media (max-width: 768px) {
+    .copy-btn {
+        padding: 0.375rem 0.625rem;
+        background-color: rgba(13, 110, 253, 0.1);
+    }
+    .dark-theme .copy-btn {
+        background-color: rgba(110, 168, 254, 0.2);
+    }
+}
+/* Стили для уведомлений */
+.custom-notification {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 12px 15px;
+    border-radius: 4px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    z-index: 1050;
+    font-size: 14px;
+    max-width: 350px;
+    width: auto;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.3s, transform 0.3s;
+    display: flex;
+    align-items: center;
+}
+.custom-notification.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+.custom-notification.success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+.custom-notification.danger {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+.custom-notification.info {
+    background-color: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+}
+.dark-theme .custom-notification.success {
+    background-color: #155724;
+    color: #d4edda;
+    border: 1px solid #28a745;
+}
+.dark-theme .custom-notification.danger {
+    background-color: #721c24;
+    color: #f8d7da;
+    border: 1px solid #dc3545;
+}
+.dark-theme .custom-notification.info {
+    background-color: #0c5460;
+    color: #d1ecf1;
+    border: 1px solid #17a2b8;
+}
+.notification-icon {
+    margin-right: 10px;
+    font-size: 16px;
+}
+.notification-close {
+    margin-left: 15px;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+}
+.notification-close:hover {
+    opacity: 1;
+}
+/* Стили для панели копирования */
+.copy-panel {
+    background-color: #f8f9fa;
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    border: 1px solid #e9ecef;
+    transition: all 0.3s ease;
+}
+.dark-theme .copy-panel {
+    background-color: #343a40;
+    border-color: #495057;
+}
+/* Стили для чекбоксов */
+.message-checkbox {
+    cursor: pointer;
+}
+.dark-theme .message-checkbox {
+    background-color: #495057;
+    border-color: #6c757d;
+}
+.dark-theme .message-checkbox:checked {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+/* Анимация для уведомлений при копировании */
+@keyframes copy-success {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+.copy-success {
+    animation: copy-success 0.3s ease;
+}
+</style>
+<div class="page-container">
+    <!-- Верхняя панель управления -->
+    <div class="control-panel mb-4">
+        <form id="channelForm" class="d-flex flex-wrap gap-2 align-items-center">
+            <div class="input-group flex-grow-1" style="max-width: 300px;">
+                                    <span class="input-group-text"><i class="fas fa-at"></i></span>
+                <input type="text" class="form-control" id="channelInput" placeholder="Название канала" required>
+                                </div>
+            <button type="button" class="btn btn-outline-secondary" id="favoriteBtn" title="Добавить в избранное">
+                                    <i class="fas fa-star"></i>
+                                </button>
+            {% if current_user.is_admin %}
+            <button type="button" class="btn btn-info" id="loadAllBtn" title="Загрузить ВСЕ сообщения">
+                <i class="fas fa-download me-2"></i>Загрузить ВСЕ
+            </button>
+            {% endif %}
+            <button type="button" class="btn btn-success" id="loadNewBtn" title="Загрузить только новые сообщения">
+                <i class="fas fa-plus-circle me-2"></i>Загрузить новые
+            </button>
+            <div class="ms-auto d-flex align-items-center">
+                <span class="me-2"><i class="fas fa-filter me-1"></i>Фильтр:</span>
+                <input type="text" class="form-control form-control-sm" id="messageSearch" placeholder="Поиск по сообщениям" style="width: 200px;">
+            </div>
+        </form>
+    </div>
+
+    <!-- Панель копирования (добавляем новую) -->
+    <div class="copy-panel mb-3 d-none">
+        <div class="d-flex align-items-center gap-2">
+            <button id="copySelectedBtn" class="btn btn-primary">
+                <i class="fas fa-copy me-1"></i>Скопировать выбранное (<span id="selectedCount">0</span>)
+            </button>
+            <button id="copyAllBtn" class="btn btn-outline-primary">
+                <i class="fas fa-copy me-1"></i>Скопировать все
+            </button>
+            <button id="selectAllBtn" class="btn btn-outline-secondary">
+                <i class="fas fa-check-square me-1"></i>Выбрать все
+            </button>
+            <button id="deselectAllBtn" class="btn btn-outline-secondary">
+                <i class="fas fa-square me-1"></i>Отменить выбор
+            </button>
+        </div>
+    </div>
+
+    <!-- Основной контент -->
+    <div class="row g-3">
+        <!-- Панель избранных каналов -->
+        <div class="col-md-3">
+            <div class="favorites-panel">
+                <h6 class="mb-3"><i class="fas fa-bookmark me-2"></i>Избранные каналы</h6>
+                <div id="favoriteChannels">
+                    <!-- Здесь будут избранные каналы -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Панель сообщений -->
+        <div class="col-md-9">
+            <!-- Индикатор начальной загрузки -->
+            <div class="loading-indicator d-none position-fixed top-50 start-50 translate-middle py-4 bg-white rounded shadow-sm px-4 z-index-10">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Загрузка...</span>
+                        </div>
+                <p class="text-muted mt-2 mb-0">Загрузка сообщений...</p>
+            </div>
+
+            <!-- Контейнер для сообщений -->
+            <div id="messagesContainer" class="message-container">
+                <div class="text-center text-muted py-5">
+                    <i class="fas fa-inbox fa-3x mb-3"></i>
+                    <p>Введите название канала и нажмите "Загрузить новые"</p>
+                </div>
+            </div>
+                    
+            <!-- Индикатор продолжающейся загрузки -->
+            <div id="loadingMoreIndicator" class="d-none position-fixed bottom-0 end-0 mb-4 me-4 py-2 px-3 bg-white rounded shadow-sm z-index-10">
+                <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+                <span class="text-muted">Загружаются дополнительные сообщения...</span>
+            </div>
+
+            <!-- Информация о загруженных сообщениях -->
+            <div id="loadingControlContainer" class="d-none text-center py-2 mt-3">
+                <div class="text-muted" id="loadingStatus">
+                    Загружено: <span id="loadedCount">0</span> сообщений
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Глобальная функция для удаления канала из избранного
+function removeFromFavorites(channel) {
+    if (confirm(`Вы действительно хотите удалить канал @${channel} из избранного?`)) {
+        fetch(`/api/telegram/favorites/${channel}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => {
+            if(response.ok) {
+                return response.json();
+            } else {
+                throw new Error(`HTTP ошибка! Статус: ${response.status}`);
+            }
+        })
+        .then(data => {
+            if (data.status === 'success') {
+                showNotification(`Канал ${channel} удален из избранного`, 'success');
+                // Обновляем список избранных
+                const favoriteChannelsContainer = document.getElementById('favoriteChannels');
+                if (favoriteChannelsContainer) {
+                    loadFavoriteChannels();
+                }
+            } else {
+                showNotification(`Ошибка при удалении канала из избранного: ${data.error || data.message}`, 'danger');
+            }
+        })
+        .catch(error => {
+            showNotification(`Ошибка при обработке запроса: ${error.message}`, 'danger');
+            console.error('Ошибка при удалении из избранного:', error);
+            // Всё равно обновляем список избранных, на случай если серверный код изменился
+            loadFavoriteChannels();
+        });
+    }
+}
+
+// Глобальная функция для отображения уведомлений
+function showNotification(message, type = 'info') {
+    // Удаляем старые уведомления с тем же типом
+    document.querySelectorAll(`.custom-notification.${type}`).forEach(el => {
+        el.remove();
+    });
+    
+    // Создаем новое уведомление
+    const notificationEl = document.createElement('div');
+    notificationEl.className = `custom-notification ${type}`;
+    
+    // Определяем иконку в зависимости от типа уведомления
+    let icon = 'info-circle';
+    if (type === 'success') icon = 'check-circle';
+    if (type === 'danger') icon = 'exclamation-circle';
+    
+    // Добавляем HTML содержимое
+    notificationEl.innerHTML = `
+        <div class="notification-icon">
+            <i class="fas fa-${icon}"></i>
+        </div>
+        <div class="notification-message">${message}</div>
+        <div class="notification-close">
+            <i class="fas fa-times"></i>
+        </div>
+    `;
+    
+    // Добавляем на страницу
+    document.body.appendChild(notificationEl);
+    
+    // Добавляем обработчик для закрытия
+    const closeBtn = notificationEl.querySelector('.notification-close');
+    closeBtn.addEventListener('click', () => {
+        notificationEl.classList.remove('show');
+        setTimeout(() => {
+            notificationEl.remove();
+        }, 300);
+    });
+    
+    // Запускаем анимацию появления
+    setTimeout(() => {
+        notificationEl.classList.add('show');
+    }, 10);
+    
+    // Автоматически скрываем через 3 секунды
+    setTimeout(() => {
+        if (document.body.contains(notificationEl)) {
+            notificationEl.classList.remove('show');
+            setTimeout(() => {
+                if (document.body.contains(notificationEl)) {
+                    notificationEl.remove();
+                }
+            }, 300);
+        }
+    }, 3000);
+    
+    // Возвращаем элемент уведомления для возможных дальнейших манипуляций
+    return notificationEl;
+}
+
+// Функция загрузки новых сообщений канала
+function loadNewMessages() {
+    const channel = document.getElementById('channelInput').value.trim();
+    
+    if (!channel) {
+        alert('Пожалуйста, введите название канала');
+        return;
+    }
+    
+    // Удаляем @ из начала, если есть
+    const channelName = channel.startsWith('@') ? channel.substring(1) : channel;
+    
+    // Сохраняем канал как последний просмотренный
+    localStorage.setItem('lastViewedChannel', channel);
+    
+    // Очищаем кэш и сбрасываем счетчики
+    messageCache.clear();
+    currentChannel = channelName;
+    currentPage = 1;
+    loadedCount = 0;
+    
+    // Показываем индикатор загрузки
+    document.querySelector('.loading-indicator').classList.remove('d-none');
+    
+    // Выполняем запрос на обновление кэша с принудительным обновлением
+    fetch('/api/telegram/refresh_cache', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            channel: channelName,
+            force_refresh: true  // Принудительный запрос к Telegram
+        })
+    })
+    .then(response => response.json())
+    .then(refreshData => {
+        console.log('Результат обновления кэша:', refreshData);
+        
+        // Проверяем, требуется ли ввод CAPTCHA
+        if (refreshData.captcha_detected) {
+            // Скрываем индикатор загрузки
+            document.querySelector('.loading-indicator').classList.add('d-none');
+            
+            // Создаем модальное окно с CAPTCHA
+            showCaptchaModal(refreshData.captcha_html, channelName);
+            
+            // Если есть сообщения в кэше, отображаем их
+            if (refreshData.status === 'info' && refreshData.cached_messages > 0) {
+                // Загружаем данные из кэша
+                return fetch(`/api/telegram/get_cache?channel=${encodeURIComponent(channelName)}`);
+            } else {
+                // Если кэша нет, выходим из цепочки Promise
+                throw new Error("Требуется ввод CAPTCHA. Введите CAPTCHA для загрузки сообщений.");
+            }
+        }
+        
+        if (refreshData.status === 'success' && refreshData.new_count > 0) {
+            // Если есть новые сообщения, показываем уведомление
+            showNotification(`Получено ${refreshData.new_count} новых сообщений!`, 'success');
+        } else if (refreshData.status === 'error') {
+            // Если произошла ошибка, показываем уведомление
+            showNotification(`Ошибка при обновлении данных: ${refreshData.error}`, 'danger');
+        } else if (refreshData.status === 'info') {
+            // Информационное сообщение
+            showNotification(refreshData.message, 'info');
+        }
+        
+        // Загружаем данные из кэша (свежие или обновленные)
+        return fetch(`/api/telegram/get_cache?channel=${encodeURIComponent(channelName)}`);
+    })
+    .then(response => {
+        // Проверяем тип контента ответа
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            return response.json();
+        } else {
+            // Если получен не JSON, сначала прочитаем как текст для диагностики
+            return response.text().then(text => {
+                console.error('Получен неправильный формат ответа:', text.substring(0, 100) + '...');
+                throw new Error('Сервер вернул ответ в неверном формате при загрузке кэша.');
+            });
+        }
+    })
+    .then(data => {
+        isLoading = false;
+        
+        // Скрываем индикатор загрузки
+        document.querySelector('.loading-indicator').classList.add('d-none');
+        
+        if (data.success && data.messages && data.messages.length > 0) {
+            console.log(`Загружено ${data.messages.length} сообщений из JSON-кэша`);
+            
+            // Показываем индикатор кэша
+            showCacheIndicator(true);
+            
+            // Отображаем сообщения из кэша
+            processMessages(data.messages);
+            
+            // Обновляем счетчик
+            loadedCount = data.messages.length;
+            totalMessages = data.messages.length;
+            hasMoreMessages = false; // При загрузке из кэша не показываем кнопку загрузки дополнительных сообщений
+            document.getElementById('loadedCount').textContent = loadedCount;
+            
+            // Показываем элементы управления
+            document.getElementById('loadingControlContainer').classList.remove('d-none');
+        } else {
+            console.error('Ошибка при загрузке данных из кэша:', data);
+            
+            // Показываем сообщение об ошибке
+            document.getElementById('messagesContainer').innerHTML = `
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Данные не найдены</strong>
+                    <p class="mt-2 mb-0">Для указанного канала не найдены данные или произошла ошибка при их загрузке.</p>
+                </div>`;
+            
+            // Запускаем стандартную загрузку через API
+            loadPage(1);
+        }
+    })
+    .catch(error => {
+        isLoading = false;
+        console.error('Ошибка при обновлении кэша:', error);
+        
+        // Если это не ошибка CAPTCHA, показываем стандартное сообщение об ошибке
+        if (!error.message.includes('CAPTCHA')) {
+            // Скрываем индикатор загрузки
+            document.querySelector('.loading-indicator').classList.add('d-none');
+            
+            // Показываем сообщение об ошибке
+            document.getElementById('messagesContainer').innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    <strong>Ошибка</strong>
+                    <p class="mt-2 mb-0">Не удалось загрузить данные: ${error.message}</p>
+                </div>`;
+            
+            // Запускаем стандартную загрузку через API в качестве запасного варианта
+            loadPage(1);
+        }
+    });
+}
+
+// Объявление глобальных переменных для использования внутри функций
+let currentChannel = '';
+let currentPage = 1;
+let totalMessages = 0;
+let loadedCount = 0;
+let isLoading = false;
+let hasMoreMessages = true;
+let loadingTimer = null;
+let messageCache = new Map(); // Кэш для хранения уже полученных сообщений
+
+// Функция сброса состояния загрузки
+function resetLoadingState() {
+    currentPage = 1;
+    totalMessages = 0;
+    loadedCount = 0;
+    isLoading = false;
+    hasMoreMessages = true;
+    messageCache.clear();
+    
+    if (loadingTimer) {
+        clearTimeout(loadingTimer);
+        loadingTimer = null;
+    }
+
+    document.getElementById('loadedCount').textContent = '0';
+    document.getElementById('loadingMoreIndicator').classList.add('d-none');
+    document.getElementById('loadingControlContainer').classList.add('d-none');
+    
+    // Удаляем индикатор кэша, если он есть
+    const existingIndicator = document.getElementById('cacheIndicator');
+    if (existingIndicator) {
+        existingIndicator.remove();
+    }
+}
+
+// Функция загрузки избранных каналов
+function loadFavoriteChannels() {
+    fetch('/api/telegram/favorites')
+        .then(response => response.json())
+        .then(data => {
+            const favoritesContainer = document.getElementById('favoriteChannels');
+            
+            if (data.length === 0) {
+                favoritesContainer.innerHTML = `
+                    <p class="text-muted text-center m-0 p-3">
+                        У вас пока нет избранных каналов.<br>
+                        Добавьте канал, нажав на кнопку <i class="fas fa-star"></i> после его загрузки.
+                    </p>`;
+                return;
+            }
+            
+            // Сортируем каналы по алфавиту
+            data.sort();
+            
+            // Создаем HTML для каждого избранного канала
+            const channelsHTML = data.map(channel => `
+                <div class="favorite-channel-item d-flex align-items-center justify-content-between mb-2">
+                    <button 
+                        class="favorite-channel-btn flex-grow-1 me-2" 
+                        onclick="document.getElementById('channelInput').value='${channel}'; loadNewMessages();"
+                    >
+                        @${channel}
+                    </button>
+                    <button 
+                        class="btn btn-sm btn-outline-danger" 
+                        onclick="removeFromFavorites('${channel}')"
+                    >
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `).join('');
+            
+            favoritesContainer.innerHTML = channelsHTML;
+        })
+        .catch(error => {
+            console.error('Ошибка при загрузке избранных каналов:', error);
+            document.getElementById('favoriteChannels').innerHTML = `
+                <div class="alert alert-danger">
+                    Ошибка при загрузке избранных каналов: ${error.message}
+                </div>`;
+        });
+}
+
+// Функция добавления канала в избранное
+function addToFavorites(channel) {
+    // Удаляем @ из начала, если есть
+    if (channel.startsWith('@')) {
+        channel = channel.substring(1);
+    }
+    
+    fetch('/api/telegram/favorites', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ channel: channel })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            showNotification(`Канал ${channel} добавлен в избранное`, 'success');
+            loadFavoriteChannels(); // Обновляем список избранных
+        } else {
+            showNotification(`Ошибка при добавлении канала в избранное: ${data.error}`, 'danger');
+        }
+    })
+    .catch(error => {
+        showNotification(`Ошибка при обработке запроса: ${error.message}`, 'danger');
+    });
+}
+
+// Функция для отображения индикатора кэша
+function showCacheIndicator(fromLocalCache, isStale = false) {
+    // Удаляем существующий индикатор, если он есть
+    const existingIndicator = document.getElementById('cacheIndicator');
+    if (existingIndicator) {
+        existingIndicator.remove();
+    }
+    
+    // Создаем элемент индикатора кэша
+    const indicator = document.createElement('div');
+    indicator.id = 'cacheIndicator';
+    indicator.className = 'cache-indicator';
+    
+    let statusText = isStale ? 'Данные загружены из устаревшего кэша' : 'Данные загружены из кэша';
+    
+    if (fromLocalCache) {
+        // Данные из локального JSON файла
+        indicator.innerHTML = `
+            <i class="fas fa-database me-1"></i>
+            <span>${statusText}</span>
+            <button id="refreshCacheBtn" class="btn btn-sm btn-outline-primary ms-2">
+                <i class="fas fa-sync-alt me-1"></i>Обновить
+            </button>
+        `;
+    } else {
+        // Данные из кэша сессии
+        indicator.innerHTML = `
+            <i class="fas fa-database me-1"></i>
+            <span>${statusText}</span>
+            <button id="refreshCacheBtn" class="btn btn-sm btn-outline-primary ms-2">
+                <i class="fas fa-sync-alt me-1"></i>Обновить
+            </button>
+        `;
+    }
+    
+    // Добавляем индикатор перед контейнером сообщений
+    const container = document.getElementById('messagesContainer');
+    container.parentNode.insertBefore(indicator, container);
+    
+    // Добавляем обработчик клика на кнопку обновления
+    document.getElementById('refreshCacheBtn').addEventListener('click', function() {
+        // Запускаем обновление
+        loadNewMessages();
+    });
+}
+
+// Функция обработки полученных сообщений
+function processMessages(messages) {
+    if (!messages || messages.length === 0) return;
+    
+    const container = document.getElementById('messagesContainer');
+    
+    // Для отладки: выводим первое сообщение в консоль
+    if (messages.length > 0) {
+        const firstMessage = messages[0];
+        console.log("Первое сообщение:", firstMessage);
+        console.log("- дата:", firstMessage.date);
+        console.log("- текст:", firstMessage.text ? firstMessage.text.substring(0, 100) : "Нет текста");
+        console.log("- html_content:", firstMessage.html_content ? firstMessage.html_content.substring(0, 100) : "Нет HTML");
+        console.log("- id:", firstMessage.id);
+        console.log("- link:", firstMessage.link);
+    }
+    
+    // Для первой страницы очищаем контейнер, только если ещё не было загружено сообщений
+    if (loadedCount === 0) {
+        container.innerHTML = '';
+    }
+    
+    // Добавляем сообщения
+    messages.forEach(message => {
+        // Проверяем, не добавлено ли уже это сообщение
+        if (messageCache.has(message.id)) {
+            return;
+        }
+        
+        // Добавляем в кэш
+        messageCache.set(message.id, message);
+        
+        // Создаем элемент сообщения
+        const messageEl = document.createElement('div');
+        messageEl.className = 'message-item';
+        messageEl.setAttribute('data-message-text', message.text ? message.text.toLowerCase() : '');
+        
+        // Отладочная информация о наличии HTML-контента
+        const hasHtmlContent = message.html_content && message.html_content.length > 0;
+        
+        // Формируем HTML сообщения
+        messageEl.innerHTML = `
+            <div class="message-header d-flex justify-content-between">
+                <div class="d-flex align-items-center">
+                    <div class="form-check me-2">
+                        <input class="form-check-input message-checkbox" type="checkbox" value="${message.id || ''}" id="msg-check-${message.id || Math.random().toString(36).substr(2, 9)}">
+                    </div>
+                    <span class="message-date">${message.date}</span>
+                    <button class="btn btn-sm ms-2 copy-btn" title="Скопировать новость">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                    ${hasHtmlContent ? '<span class="badge bg-info ms-2" title="Содержит форматированный HTML">HTML</span>' : ''}
+                </div>
+                <span class="message-id">${message.id ? '#' + message.id : ''}</span>
+            </div>
+            <div class="message-text">${formatMessageText(message.text, message.html_content)}</div>
+            ${message.link ? `<a href="${message.link}" target="_blank" class="message-link">
+                <i class="fas fa-external-link-alt me-1"></i>Открыть в Telegram
+            </a>` : ''}
+        `;
+        
+        // Добавляем в контейнер
+        container.appendChild(messageEl);
+        
+        // Добавляем обработчик события для кнопки копирования
+        const copyBtn = messageEl.querySelector('.copy-btn');
+        copyBtn.addEventListener('click', function() {
+            const linkText = message.link ? `\nСсылка: ${message.link}` : '';
+            const textToCopy = `Дата: ${message.date}\nКанал: @${currentChannel}\nНовость: ${message.text}${linkText}`;
+            copyToClipboard(textToCopy);
+        });
+        
+        // Добавляем обработчик для тач-событий, чтобы избежать двойных касаний на мобильных устройствах
+        copyBtn.addEventListener('touchend', function(e) {
+            e.preventDefault(); // Предотвращаем стандартное поведение
+            const linkText = message.link ? `\nСсылка: ${message.link}` : '';
+            const textToCopy = `Дата: ${message.date}\nКанал: @${currentChannel}\nНовость: ${message.text}${linkText}`;
+            copyToClipboard(textToCopy);
+        });
+    });
+    
+    // Применяем текущий фильтр, если он есть
+    const searchInput = document.getElementById('messageSearch');
+    if (searchInput.value) {
+        filterMessages(searchInput.value);
+    }
+    
+    // Увеличиваем счетчик текущей страницы
+    currentPage++;
+    
+    // Обновляем отображение панели копирования
+    if (typeof updateSelectedCount === 'function') {
+        updateSelectedCount();
+    }
+}
+
+// Функция форматирования текста сообщения
+function formatMessageText(text, html_content) {
+    // Вывод отладочной информации
+    console.log(`formatMessageText вызвана с текстом (${text ? text.length : 0} символов) и HTML (${html_content ? html_content.length : 0} символов)`);
+    
+    // Если есть HTML-контент, используем его напрямую
+    if (html_content && html_content.length > 0) {
+        // Проверяем, является ли HTML полным контейнером или просто текстом с тегами
+        if (html_content.includes('<div class="tgme_widget_message_text')) {
+            console.log("Обнаружен полный HTML-контейнер Telegram");
+            // Просто возвращаем HTML как есть, так как Telegram уже отформатировал его
+            return html_content;
+        } else {
+            console.log("HTML-контент не содержит полного контейнера, выполняю дополнительную обработку");
+            // Обрабатываем HTML-контент, который не является полным контейнером
+            try {
+                // Создаем временный div для обработки HTML
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = html_content;
+                
+                // Активируем все ссылки
+                const links = tempDiv.querySelectorAll('a');
+                links.forEach(link => {
+                    if (link.getAttribute('href')) {
+                        link.setAttribute('target', '_blank');
+                        link.setAttribute('rel', 'noopener noreferrer');
+                        link.classList.add('link-primary');
+                    }
+                });
+                
+                return tempDiv.innerHTML;
+            } catch (e) {
+                console.error("Ошибка при обработке HTML-контента:", e);
+                // Если произошла ошибка, возвращаем исходный HTML
+                return html_content;
+            }
+        }
+    }
+    
+    // Если нет HTML, но есть текст
+    if (text) {
+        console.log(`Использую обычный текст (${text.length} символов)`);
+        // Проверяем, не является ли текст сообщением об отсутствии текста
+        if (text === "Текст сообщения отсутствует" || 
+            text === "Текст сообщения в формате HTML (см. ссылку)" ||
+            text === "Ошибка при обработке текста сообщения") {
+            return `<div class="text-muted fst-italic">${text}</div>`;
+        }
+        return formatPlainText(text);
+    }
+    
+    // Если ни текста, ни HTML нет
+    console.log("И текст, и HTML-контент отсутствуют");
+    return '<div class="text-muted fst-italic">Текст сообщения отсутствует или не загружен</div>';
+}
+
+// Форматирование обычного текста
+function formatPlainText(text) {
+    if (!text) return '';
+    
+    // Заменяем переносы строк на <br>
+    let formatted = text.replace(/\n/g, '<br>');
+    
+    // Преобразуем ссылки в кликабельные
+    formatted = formatted.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" class="link-primary">$1</a>');
+    
+    return formatted;
+}
+
+// Функция копирования текста в буфер обмена
+function copyToClipboard(text) {
+    // Сначала пробуем использовать современный API navigator.clipboard
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text)
+            .then(() => {
+                // Получаем кнопку, которая была нажата (если это была кнопка копирования)
+                const activeElement = document.activeElement;
+                if (activeElement && activeElement.classList.contains('copy-btn')) {
+                    activeElement.classList.add('copy-success');
+                    setTimeout(() => {
+                        activeElement.classList.remove('copy-success');
+                    }, 500);
+                }
+                showNotification('Текст скопирован в буфер обмена', 'success');
+            })
+            .catch(err => {
+                console.warn('Не удалось использовать navigator.clipboard', err);
+                fallbackCopyToClipboard(text);
+            });
+    } else {
+        // Если API не поддерживается, используем запасной метод
+        fallbackCopyToClipboard(text);
+    }
+}
+
+// Запасной метод копирования через временный textarea-элемент
+function fallbackCopyToClipboard(text) {
+    try {
+        // Создаем временный textarea элемент
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        
+        // Делаем элемент невидимым
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        
+        // Добавляем в DOM
+        document.body.appendChild(textarea);
+        
+        // Выделяем и копируем текст
+        textarea.select();
+        const success = document.execCommand('copy');
+        
+        // Удаляем временный элемент
+        document.body.removeChild(textarea);
+        
+        if (success) {
+            // Получаем кнопку, которая была нажата (если это была кнопка копирования)
+            const activeElement = document.activeElement;
+            if (activeElement && activeElement.classList.contains('copy-btn')) {
+                activeElement.classList.add('copy-success');
+                setTimeout(() => {
+                    activeElement.classList.remove('copy-success');
+                }, 500);
+            }
+            showNotification('Текст скопирован в буфер обмена', 'success');
+        } else {
+            showNotification('Не удалось скопировать текст', 'danger');
+        }
+    } catch (err) {
+        console.error('Не удалось скопировать текст через запасной метод:', err);
+        showNotification('Не удалось скопировать текст', 'danger');
+    }
+}
+
+// Фильтрация сообщений по тексту
+function filterMessages(searchText) {
+    if (!searchText) searchText = '';
+    searchText = searchText.toLowerCase();
+    document.querySelectorAll('.message-item').forEach(item => {
+        const messageText = item.getAttribute('data-message-text');
+        if (searchText === '' || (messageText && messageText.includes(searchText))) {
+            item.style.display = 'block';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
+
+// Функция загрузки страницы
+function loadPage(page) {
+    if (isLoading || !hasMoreMessages) return;
+    
+    isLoading = true;
+    
+    console.log(`Загрузка страницы ${page} для канала ${currentChannel}`);
+    
+    if (page > 1) {
+        // Показываем индикатор дополнительной загрузки только со второй страницы
+        document.getElementById('loadingMoreIndicator').classList.remove('d-none');
+    } else {
+        // Если первая страница - показываем индикатор загрузки
+        const firstLoad = loadedCount === 0;
+        if (firstLoad) {
+            document.querySelector('.loading-indicator').classList.remove('d-none');
+        }
+    }
+
+    // Запрос к API
+    fetch('/api/telegram/parse', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            channel: currentChannel,
+            page: page,
+            per_page: 20, // Количество сообщений на страницу
+            save_to_json: true // Указываем, что нужно сохранять в JSON
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        isLoading = false;
+        
+        // Скрываем индикаторы загрузки
+        if (page === 1) {
+            document.querySelector('.loading-indicator').classList.add('d-none');
+            
+            // Если данные из кэша, показываем индикатор
+            if (data.source === 'cache' || data.source === 'cache_fallback' || data.source === 'cache_with_captcha') {
+                showCacheIndicator(false, data.source === 'cache_fallback');
+            }
+        } else {
+            document.getElementById('loadingMoreIndicator').classList.add('d-none');
+        }
+        
+        // Проверяем наличие CAPTCHA
+        if (data.captcha_detected) {
+            console.log('Обнаружена CAPTCHA, показываем модальное окно');
+            showCaptchaModal(data.captcha_html, currentChannel);
+            
+            // Если есть сообщения (из кэша), отображаем их
+            if (data.messages && data.messages.length > 0) {
+                processMessages(data.messages);
+                loadedCount = data.messages.length;
+                totalMessages = data.pagination.total_messages;
+                hasMoreMessages = data.pagination.has_more;
+                document.getElementById('loadedCount').textContent = loadedCount;
+                document.getElementById('loadingControlContainer').classList.remove('d-none');
+            }
+            return;
+        }
+        
+        if (data.error) {
+            console.error("Ошибка API:", data.error);
+            // Отображаем ошибку
+            if (page === 1 && loadedCount === 0) {
+                document.getElementById('messagesContainer').innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-circle me-2"></i>${data.error}
+                    </div>`;
+            }
+            return;
+        }
+        
+        console.log("Получены данные:", {
+            page: page,
+            totalMessages: data.pagination.total_messages,
+            messagesOnPage: data.messages.length,
+            source: data.source || 'unknown'
+        });
+        
+        // Обновляем общую информацию
+        totalMessages = data.pagination.total_messages;
+        hasMoreMessages = data.pagination.has_more;
+        
+        // Обрабатываем полученные сообщения
+        processMessages(data.messages);
+        
+        // Обновляем счетчик загруженных сообщений
+        loadedCount += data.messages.length;
+        document.getElementById('loadedCount').textContent = loadedCount;
+        
+        // Показываем элементы управления
+        document.getElementById('loadingControlContainer').classList.remove('d-none');
+        
+        // Если есть еще сообщения, планируем загрузку следующей порции
+        if (hasMoreMessages) {
+            // Планируем загрузку следующей страницы через 3 секунды
+            document.getElementById('loadingMoreIndicator').classList.remove('d-none');
+            loadingTimer = setTimeout(() => {
+                loadPage(page + 1);
+            }, 3000); // 3 секунды
+        } else {
+            // Если больше нет сообщений
+            document.getElementById('loadingMoreIndicator').classList.add('d-none');
+        }
+    })
+    .catch(error => {
+        isLoading = false;
+        console.error("Ошибка при загрузке данных:", error);
+        
+        // Отображаем ошибку
+        if (page === 1 && loadedCount === 0) {
+            document.querySelector('.loading-indicator').classList.add('d-none');
+            document.getElementById('messagesContainer').innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle me-2"></i>Ошибка: ${error.message}
+                </div>`;
+        } else {
+            document.getElementById('loadingMoreIndicator').classList.add('d-none');
+        }
+    });
+}
+
+// Обработка прокрутки страницы для подгрузки контента
+function handleScroll() {
+    if (isLoading || !hasMoreMessages) return;
+    
+    const scrollY = window.scrollY;
+    const visible = window.innerHeight;
+    const pageHeight = document.body.offsetHeight;
+    const bottomOfPage = visible + scrollY >= pageHeight - 300;
+    
+    if (bottomOfPage || pageHeight < visible) {
+        loadMoreMessages();
+    }
+}
+
+// Функция загрузки дополнительных сообщений
+function loadMoreMessages() {
+    if (isLoading || !hasMoreMessages) {
+        return;
+    }
+    
+    isLoading = true;
+    currentPage++;
+    
+    // Показываем индикатор загрузки
+    document.getElementById('loadingMoreIndicator').classList.remove('d-none');
+    
+    fetch('/api/telegram/parse', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            channel: currentChannel,
+            page: currentPage,
+            per_page: 20,
+            save_to_json: true
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Скрываем индикатор загрузки
+        document.getElementById('loadingMoreIndicator').classList.add('d-none');
+        
+        if (data.error) {
+            throw new Error(data.error);
+        }
+        
+        // Обрабатываем полученные сообщения
+        processMessages(data.messages);
+        
+        // Обновляем счетчики
+        loadedCount += data.messages.length;
+        totalMessages = data.pagination.total_messages;
+        hasMoreMessages = data.pagination.has_more;
+        
+        // Обновляем статус загрузки
+        document.getElementById('loadedCount').textContent = loadedCount;
+        
+        // Продолжаем загрузку после паузы, если не достигли конца
+        isLoading = false;
+        if (hasMoreMessages) {
+            loadingTimer = setTimeout(loadMoreMessages, 1000);
+        }
+    })
+    .catch(error => {
+        // Скрываем индикатор загрузки
+        document.getElementById('loadingMoreIndicator').classList.add('d-none');
+        isLoading = false;
+        
+        console.error('Ошибка при загрузке дополнительных сообщений:', error);
+        showNotification(`Ошибка при загрузке страницы ${currentPage}: ${error.message}`, 'danger');
+        
+        // Уменьшаем номер страницы и пробуем еще раз через некоторое время
+        currentPage--;
+        if (hasMoreMessages) {
+            loadingTimer = setTimeout(loadMoreMessages, 5000);
+        }
+    });
+}
+
+// Функция загрузки всех сообщений канала
+function loadAllMessages() {
+    const channel = document.getElementById('channelInput').value.trim();
+    
+    if (!channel) {
+        alert('Пожалуйста, введите название канала');
+        return;
+    }
+    
+    // Установка текущего канала
+    currentChannel = channel;
+    
+    // Показываем диалог с настройками загрузки
+    const maxPagesStr = prompt('Введите максимальное количество страниц для загрузки (пустое значение - без ограничений):', '');
+    let maxPages = null;
+    if (maxPagesStr && !isNaN(maxPagesStr)) {
+        maxPages = parseInt(maxPagesStr);
+    }
+    
+    if (!confirm(`Вы собираетесь загрузить ВСЕ сообщения канала${maxPages ? ' (до ' + maxPages + ' страниц)' : ''}. Это может занять значительное время. Продолжить?`)) {
+        return;
+    }
+    
+    // Создаем идентификатор загрузки для возможности отмены
+    const loadId = Date.now();
+    window.currentLoadId = loadId;
+    
+    // Показываем индикатор загрузки
+    document.querySelector('.loading-indicator').classList.remove('d-none');
+    
+    // Отключаем кнопки управления на время загрузки
+    document.getElementById('favoriteBtn').disabled = true;
+    if (document.getElementById('loadAllBtn')) {
+        document.getElementById('loadAllBtn').disabled = true;
+    }
+    document.getElementById('loadNewBtn').disabled = true;
+    
+    // Отображаем сообщение о начале загрузки с возможностью отмены и индикатором прогресса
+    const messagesContainer = document.getElementById('messagesContainer');
+    messagesContainer.innerHTML = `
+        <div class="alert alert-info">
+            <i class="fas fa-spinner fa-spin me-2"></i>
+            <strong>Загрузка всех сообщений канала ${channel}...</strong>
+            <div class="mt-2 mb-2">
+                <div class="progress" style="height: 20px;">
+                    <div id="loadProgressBar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%">0%</div>
+                </div>
+            </div>
+            <p id="loadStatusText" class="text-muted mb-0">Начинаем загрузку... Пожалуйста, не закрывайте страницу.</p>
+            <div class="mt-3">
+                <button id="cancelLoadBtn" class="btn btn-sm btn-danger">
+                    <i class="fas fa-times me-1"></i>Отменить загрузку
+                </button>
+            </div>
+        </div>
+    `;
+    
+    // Добавляем обработчик для кнопки отмены
+    document.getElementById('cancelLoadBtn').addEventListener('click', function() {
+        window.currentLoadId = null;
+        showNotification('Загрузка отменена пользователем', 'info');
+        
+        // Разблокируем кнопки
+        document.getElementById('favoriteBtn').disabled = false;
+        if (document.getElementById('loadAllBtn')) {
+            document.getElementById('loadAllBtn').disabled = false;
+        }
+        document.getElementById('loadNewBtn').disabled = false;
+        
+        // Скрываем индикатор загрузки
+        document.querySelector('.loading-indicator').classList.add('d-none');
+        
+        // Показываем сообщение об отмене
+        messagesContainer.innerHTML = `
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <strong>Загрузка отменена пользователем</strong>
+                <p class="mt-2 mb-0">Вы можете попробовать загрузить сообщения снова или использовать функцию "Загрузить новые" для просмотра уже загруженных сообщений.</p>
+                <div class="mt-3">
+                    <button id="loadCachedBtn" class="btn btn-sm btn-primary">
+                        <i class="fas fa-download me-1"></i>Загрузить имеющиеся сообщения
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        // Добавляем обработчик для загрузки кэшированных данных
+        document.getElementById('loadCachedBtn').addEventListener('click', function() {
+            loadNewMessages();
+        });
+    });
+    
+    // Запрашиваем полную загрузку всех сообщений канала
+    fetch('/api/telegram/load_all', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            channel: channel,
+            max_pages: maxPages
+        })
+    })
+    .then(response => {
+        // Проверяем тип контента ответа
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            return response.json();
+        } else {
+            // Если получен не JSON, сначала прочитаем как текст для диагностики
+            return response.text().then(text => {
+                console.error('Получен неправильный формат ответа:', text.substring(0, 100) + '...');
+                throw new Error('Сервер вернул ответ в неверном формате. Это может быть ошибка сервера или проблема с аутентификацией.');
+            });
+        }
+    })
+    .then(data => {
+        // Обработка успешного ответа
+        // ... остальной код обработки ответа
+    })
+    .catch(error => {
+        // Обработка ошибок
+        // ... остальной код обработки ошибок
+    });
+}
+
+// Функция для работы с выбранными сообщениями
+function handleSelectedMessages() {
+    // Обновляем счетчик выбранных сообщений
+    function updateSelectedCount() {
+        const selectedCount = document.querySelectorAll('.message-checkbox:checked').length;
+        document.getElementById('selectedCount').textContent = selectedCount;
+        
+        // Показываем/скрываем панель копирования
+        const copyPanel = document.querySelector('.copy-panel');
+        const messagesExist = document.querySelectorAll('.message-item').length > 0;
+        
+        if (messagesExist) {
+            copyPanel.classList.remove('d-none');
+        } else {
+            copyPanel.classList.add('d-none');
+        }
+    }
+
+    // Копирование выбранных сообщений
+    function copySelectedMessages() {
+        const selected = document.querySelectorAll('.message-checkbox:checked');
+        if (selected.length === 0) {
+            showNotification('Не выбрано ни одного сообщения', 'warning');
+            return;
+        }
+
+        let textToCopy = '';
+        selected.forEach((checkbox, index) => {
+            const messageId = checkbox.value;
+            const message = messageCache.get(parseInt(messageId));
+            
+            if (message) {
+                const linkText = message.link ? `\nСсылка: ${message.link}` : '';
+                textToCopy += `--- Сообщение ${index + 1} ---\nДата: ${message.date}\nКанал: @${currentChannel}\nНовость: ${message.text}${linkText}\n\n`;
+            }
+        });
+
+        if (textToCopy) {
+            copyToClipboard(textToCopy.trim());
+            showNotification(`Скопировано ${selected.length} сообщений`, 'success');
+        } else {
+            showNotification('Не удалось найти данные выбранных сообщений', 'danger');
+        }
+    }
+
+    // Копирование всех отображаемых сообщений
+    function copyAllMessages() {
+        const visibleMessages = Array.from(document.querySelectorAll('.message-item'))
+            .filter(el => el.style.display !== 'none');
+        
+        if (visibleMessages.length === 0) {
+            showNotification('Нет видимых сообщений для копирования', 'warning');
+            return;
+        }
+
+        let textToCopy = '';
+        visibleMessages.forEach((messageEl, index) => {
+            const checkbox = messageEl.querySelector('.message-checkbox');
+            if (checkbox) {
+                const messageId = checkbox.value;
+                const message = messageCache.get(parseInt(messageId));
+                
+                if (message) {
+                    const linkText = message.link ? `\nСсылка: ${message.link}` : '';
+                    textToCopy += `--- Сообщение ${index + 1} ---\nДата: ${message.date}\nКанал: @${currentChannel}\nНовость: ${message.text}${linkText}\n\n`;
+                }
+            }
+        });
+
+        if (textToCopy) {
+            copyToClipboard(textToCopy.trim());
+            showNotification(`Скопировано ${visibleMessages.length} сообщений`, 'success');
+        } else {
+            showNotification('Не удалось найти данные сообщений', 'danger');
+        }
+    }
+
+    // Выбрать все видимые сообщения
+    function selectAllMessages() {
+        const visibleMessages = Array.from(document.querySelectorAll('.message-item'))
+            .filter(el => el.style.display !== 'none');
+        
+        visibleMessages.forEach(messageEl => {
+            const checkbox = messageEl.querySelector('.message-checkbox');
+            if (checkbox) {
+                checkbox.checked = true;
+            }
+        });
+        
+        updateSelectedCount();
+        showNotification(`Выбрано ${visibleMessages.length} сообщений`, 'info');
+    }
+
+    // Отменить выбор всех сообщений
+    function deselectAllMessages() {
+        document.querySelectorAll('.message-checkbox:checked').forEach(checkbox => {
+            checkbox.checked = false;
+        });
+        
+        updateSelectedCount();
+        showNotification('Выбор отменен', 'info');
+    }
+    
+    // Добавляем обработчики событий для кнопок
+    document.getElementById('copySelectedBtn').addEventListener('click', copySelectedMessages);
+    document.getElementById('copyAllBtn').addEventListener('click', copyAllMessages);
+    document.getElementById('selectAllBtn').addEventListener('click', selectAllMessages);
+    document.getElementById('deselectAllBtn').addEventListener('click', deselectAllMessages);
+    
+    // Добавляем обработчик для чекбоксов
+    document.addEventListener('change', function(e) {
+        if (e.target && e.target.classList.contains('message-checkbox')) {
+            updateSelectedCount();
+        }
+    });
+    
+    // Инициализируем счетчик
+    updateSelectedCount();
+}
+
+// Функция для отображения модального окна с CAPTCHA
+function showCaptchaModal(captchaHtml, channelName) {
+    // Проверяем, нет ли уже открытого модального окна с CAPTCHA
+    if (document.getElementById('captchaModal')) {
+        document.getElementById('captchaModal').remove();
+    }
+    
+    console.log("Отображение модального окна CAPTCHA");
+    
+    // Создаем модальное окно
+    const modal = document.createElement('div');
+    modal.className = 'modal fade';
+    modal.id = 'captchaModal';
+    modal.tabIndex = '-1';
+    modal.setAttribute('aria-labelledby', 'captchaModalLabel');
+    modal.setAttribute('aria-hidden', 'true');
+    modal.innerHTML = `
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="captchaModalLabel">Требуется ввод CAPTCHA</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Telegram запрашивает подтверждение</strong>
+                        <p class="mb-1">Для просмотра канала @${channelName} требуется подтвердить, что вы не робот.</p>
+                    </div>
+                    
+                    <ul class="nav nav-tabs mb-3" id="captchaTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="direct-tab" data-bs-toggle="tab" data-bs-target="#direct-pane" 
+                                type="button" role="tab" aria-controls="direct-pane" aria-selected="true">
+                                Прямой доступ
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="iframe-tab" data-bs-toggle="tab" data-bs-target="#iframe-pane" 
+                                type="button" role="tab" aria-controls="iframe-pane" aria-selected="false">
+                                Через iframe (если доступно)
+                            </button>
+                        </li>
+                    </ul>
+                    
+                    <div class="tab-content" id="captchaTabContent">
+                        <div class="tab-pane fade show active" id="direct-pane" role="tabpanel" aria-labelledby="direct-tab">
+                            <p>Пожалуйста, перейдите по ссылке ниже и решите CAPTCHA в Telegram:</p>
+                            <div class="d-grid gap-2">
+                                <a href="https://t.me/s/${channelName}" target="_blank" class="btn btn-primary">
+                                    <i class="fab fa-telegram-plane me-1"></i>Открыть канал в Telegram
+                                </a>
+                                <button id="directCaptchaReload" class="btn btn-success">
+                                    <i class="fas fa-sync-alt me-1"></i>Я решил CAPTCHA, продолжить
+                                </button>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="iframe-pane" role="tabpanel" aria-labelledby="iframe-tab">
+                            <div id="captchaContainer" class="captcha-container">
+                                <div class="alert alert-info mb-3">
+                                    <i class="fas fa-spinner fa-spin me-2"></i> Загрузка CAPTCHA...
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <button id="iframeCaptchaReload" class="btn btn-success d-block w-100">
+                                    <i class="fas fa-sync-alt me-1"></i>Я решил CAPTCHA, продолжить
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Добавляем модальное окно в тело документа
+    document.body.appendChild(modal);
+    
+    // Инициализируем и показываем модальное окно
+    const modalInstance = new bootstrap.Modal(modal);
+    modalInstance.show();
+    
+    // Добавляем стили для CAPTCHA, если их нет
+    if (!document.getElementById('captcha-styles')) {
+        const styleElement = document.createElement('style');
+        styleElement.id = 'captcha-styles';
+        styleElement.textContent = `
+            .captcha-container img {
+                max-width: 100%;
+                height: auto;
+                margin-bottom: 15px;
+                display: block;
+            }
+            .captcha-container input[type="text"] {
+                width: 100%;
+                padding: 8px;
+                margin-bottom: 10px;
+                border: 1px solid #ced4da;
+                border-radius: 4px;
+            }
+            .captcha-container button {
+                background-color: #0d6efd;
+                color: white;
+                border: none;
+                padding: 8px 16px;
+                border-radius: 4px;
+                cursor: pointer;
+            }
+            #captchaModal {
+                z-index: 1060;
+            }
+            .captcha-iframe {
+                width: 100%;
+                height: 450px;
+                border: 1px solid #dee2e6;
+                border-radius: 4px;
+            }
+        `;
+        document.head.appendChild(styleElement);
+    }
+    
+    // Обработчики для кнопок перезагрузки
+    document.getElementById('directCaptchaReload').addEventListener('click', function() {
+        modalInstance.hide();
+        showNotification('Загрузка данных после ввода CAPTCHA...', 'info');
+        loadNewMessages();
+    });
+    
+    document.getElementById('iframeCaptchaReload').addEventListener('click', function() {
+        modalInstance.hide();
+        showNotification('Загрузка данных после ввода CAPTCHA...', 'info');
+        loadNewMessages();
+    });
+    
+    // Обрабатываем HTML с CAPTCHA для iframe
+    setTimeout(() => {
+        try {
+            console.log("Настройка iframe для CAPTCHA");
+            const captchaContainer = document.getElementById('captchaContainer');
+            
+            // Создаем iframe для загрузки страницы Telegram
+            const iframe = document.createElement('iframe');
+            iframe.className = 'captcha-iframe';
+            iframe.src = `https://t.me/s/${channelName}`;
+            iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms');
+            iframe.setAttribute('loading', 'lazy');
+            
+            // Очищаем контейнер и добавляем iframe
+            captchaContainer.innerHTML = '';
+            captchaContainer.appendChild(iframe);
+            
+            // Также пробуем извлечь и показать изображение CAPTCHA
+            try {
+                console.log("Парсинг HTML CAPTCHA");
+                // Получаем форму CAPTCHA из HTML
+                const parser = new DOMParser();
+                const captchaDoc = parser.parseFromString(captchaHtml, 'text/html');
+                
+                // Ищем изображение CAPTCHA
+                const captchaImage = captchaDoc.querySelector('img.captcha__image') || captchaDoc.querySelector('img[src*="captcha"]');
+                
+                if (captchaImage && captchaImage.src) {
+                    console.log('Найдено изображение CAPTCHA:', captchaImage.src);
+                    
+                    // Добавляем изображение под iframe
+                    const imgContainer = document.createElement('div');
+                    imgContainer.className = 'mt-3 p-3 border rounded';
+                    imgContainer.innerHTML = `
+                        <p class="mb-2">Изображение CAPTCHA (если iframe не работает):</p>
+                        <img src="${captchaImage.src}" alt="CAPTCHA" class="img-fluid mb-3 mx-auto d-block">
+                    `;
+                    
+                    captchaContainer.appendChild(imgContainer);
+                }
+            } catch (error) {
+                console.error('Ошибка при извлечении изображения CAPTCHA:', error);
+            }
+            
+        } catch (error) {
+            console.error('Ошибка при настройке iframe для CAPTCHA:', error);
+            
+            const captchaContainer = document.getElementById('captchaContainer');
+            captchaContainer.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    <strong>Не удалось загрузить CAPTCHA через iframe</strong>
+                    <p>Пожалуйста, используйте вкладку "Прямой доступ" для решения CAPTCHA</p>
+                </div>
+            `;
+        }
+    }, 500);
+    
+    // Показываем уведомление об обнаружении CAPTCHA
+    showNotification('Обнаружена защита Telegram CAPTCHA. Решите CAPTCHA чтобы продолжить.', 'warning');
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Начальная инициализация и загрузка избранных каналов
+    loadFavoriteChannels();
+
+    // Восстанавливаем последний просмотренный канал, если он был сохранен
+    const lastViewedChannel = localStorage.getItem('lastViewedChannel');
+    if (lastViewedChannel) {
+        document.getElementById('channelInput').value = lastViewedChannel;
+        // Автоматически загружаем сообщения последнего канала
+        setTimeout(() => {
+            loadNewMessages();
+        }, 500); // Небольшая задержка для того, чтобы страница успела загрузиться
+    }
+
+    // Обработчик отправки формы
+    document.getElementById('channelForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        // При отправке формы запускаем загрузку новых сообщений
+        loadNewMessages();
+    });
+
+    // Добавление канала в избранное
+    document.getElementById('favoriteBtn').addEventListener('click', function() {
+        const channel = document.getElementById('channelInput').value.trim();
+        
+        if (!channel) {
+            alert('Пожалуйста, введите название канала');
+            return;
+        }
+        
+        addToFavorites(channel);
+    });
+
+    // Загрузка всех сообщений канала
+    if (document.getElementById('loadAllBtn')) {
+        document.getElementById('loadAllBtn').addEventListener('click', function() {
+            loadAllMessages();
+        });
+    }
+
+    // Загрузка только новых сообщений
+    document.getElementById('loadNewBtn').addEventListener('click', function() {
+        loadNewMessages();
+    });
+
+    // Обработчик поиска (фильтрации) сообщений
+    document.getElementById('messageSearch').addEventListener('input', function() {
+        filterMessages(this.value);
+    });
+    
+    // Обработка скролла для автоматической подгрузки
+    window.addEventListener('scroll', function() {
+        if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 500 && !isLoading && hasMoreMessages) {
+            // Загружаем следующую страницу, если пользователь достиг конца страницы
+            loadMoreMessages();
+        }
+    });
+
+    // Инициализация обработчиков для выбранных сообщений
+    handleSelectedMessages();
+});
+</script>
+{% endblock %}

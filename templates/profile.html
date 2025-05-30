@@ -1,0 +1,305 @@
+{% extends "base.html" %}
+{% block title %}Профиль{% endblock %}
+
+{% block additional_head %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="profile-page">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="profile-header">
+                <form action="{{ url_for('profile') }}" method="post" enctype="multipart/form-data" id="profile-picture-form">
+                    <!-- Используем hidden_tag вместо csrf_token -->
+                    {{ form.hidden_tag() }}
+                    <div class="profile-picture-container">
+                        <img class="profile-picture" id="profile-image-preview" src="{{ url_for('profile_pics', filename=current_user.profile_image) }}" alt="Фото профиля">
+                        <div class="change-picture-overlay" onclick="document.getElementById('picture-upload').click();">
+                            <i class="fas fa-camera"></i> Сменить фото
+                        </div>
+                        {{ form.picture(class="d-none", id="picture-upload") }}
+                    </div>
+                </form>
+                
+                <div class="profile-info">
+                    <h4 class="profile-name">{{ current_user.first_name }} {{ current_user.last_name }}</h4>
+                    <p class="profile-position">{{ current_user.position }}</p>
+                    <p class="profile-department">{{ current_user.department }}</p>
+                </div>
+            </div>
+            
+            <div class="calendar-container">
+                <div class="calendar-header">
+                    <h5 class="calendar-title" id="calendar-month-year">Календарь</h5>
+                    <div class="calendar-controls">
+                        <button id="prev-month"><i class="fas fa-chevron-left"></i></button>
+                        <button id="next-month"><i class="fas fa-chevron-right"></i></button>
+                    </div>
+                </div>
+                <div class="calendar-weekdays" id="weekdays">
+                    <div>Пн</div>
+                    <div>Вт</div>
+                    <div>Ср</div>
+                    <div>Чт</div>
+                    <div>Пт</div>
+                    <div>Сб</div>
+                    <div>Вс</div>
+                </div>
+                <div class="calendar-days" id="calendar-days"></div>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <ul class="nav nav-tabs profile-tabs" id="profileTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile-content" type="button" role="tab" aria-controls="profile-content" aria-selected="true">
+                        <i class="fas fa-user me-2"></i>Профиль
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="account-tab" data-bs-toggle="tab" data-bs-target="#account-content" type="button" role="tab" aria-controls="account-content" aria-selected="false">
+                        <i class="fas fa-cog me-2"></i>Данные
+                    </button>
+                </li>
+            </ul>
+            
+            <div class="tab-content" id="profileTabsContent">
+                <!-- Вкладка Профиль - Объединенная форма со всеми полями -->
+                <div class="tab-pane fade show active profile-content" id="profile-content" role="tabpanel" aria-labelledby="profile-tab">
+                    <form method="POST" action="{{ url_for('profile') }}" id="profile-form">
+                        {{ form.hidden_tag() }}
+                        
+                        <!-- Скрытое поле email для сохранения даже при обновлении этой вкладки -->
+                        <div style="display: none;">
+                            {{ form.email }}
+                        </div>
+                        
+                        <div class="profile-section">
+                            <h5 class="profile-section-title">Личная информация</h5>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Имя</label>
+                                    {{ form.first_name(class="form-control form-control-profile") }}
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Фамилия</label>
+                                    {{ form.last_name(class="form-control form-control-profile") }}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="profile-section">
+                            <h5 class="profile-section-title">Рабочая информация</h5>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Отдел</label>
+                                    {{ form.department(class="form-control form-control-profile form-select") }}
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Должность</label>
+                                    {{ form.position(class="form-control form-control-profile") }}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            {{ form.submit(class="btn btn-primary btn-profile") }}
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Вкладка Данные -->
+                <div class="tab-pane fade profile-content" id="account-content" role="tabpanel" aria-labelledby="account-tab">
+                    <div class="profile-section">
+                        <h5 class="profile-section-title">Информация аккаунта</h5>
+                        <form method="POST" action="{{ url_for('profile') }}" id="email-form">
+                            {{ form.hidden_tag() }}
+                            
+                            <!-- Скрытые поля для сохранения остальных данных при обновлении только email -->
+                            <div style="display: none;">
+                                {{ form.first_name }}
+                                {{ form.last_name }}
+                                {{ form.department }}
+                                {{ form.position }}
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Email</label>
+                                {{ form.email(class="form-control form-control-profile") }}
+                            </div>
+                            <div class="d-grid gap-2">
+                                {{ form.submit(class="btn btn-primary btn-profile") }}
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <div class="profile-section">
+                        <h5 class="profile-section-title">Сменить пароль</h5>
+                        <form method="POST" action="{{ url_for('update_password') }}">
+                            {{ password_form.hidden_tag() }}
+                            <div class="mb-3">
+                                <label class="form-label">Текущий пароль</label>
+                                {{ password_form.current_password(class="form-control form-control-profile") }}
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Новый пароль</label>
+                                {{ password_form.new_password(class="form-control form-control-profile") }}
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Подтвердите новый пароль</label>
+                                {{ password_form.confirm_password(class="form-control form-control-profile") }}
+                            </div>
+                            <div class="d-grid gap-2">
+                                {{ password_form.submit(class="btn btn-primary btn-profile") }}
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Кнопка выхода из системы -->
+            <div class="mt-4">
+                <a href="{{ url_for('logout') }}" class="btn btn-outline-danger w-100">
+                    <i class="fas fa-sign-out-alt me-2"></i>Выйти из системы
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ru.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Функция для выбора изображения
+        const pictureUpload = document.getElementById('picture-upload');
+        const profilePictureForm = document.getElementById('profile-picture-form');
+        
+        if (pictureUpload) {
+            pictureUpload.addEventListener('change', function() {
+                if (this.files && this.files[0]) {
+                    // Показываем предпросмотр изображения
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        document.getElementById('profile-image-preview').src = e.target.result;
+                    }
+                    reader.readAsDataURL(this.files[0]);
+                    
+                    // Отправляем форму автоматически при выборе файла
+                    profilePictureForm.submit();
+                }
+            });
+        }
+        
+        // Создание простого календаря
+        const calendarDays = document.getElementById('calendar-days');
+        const calendarTitle = document.getElementById('calendar-month-year');
+        const prevMonthBtn = document.getElementById('prev-month');
+        const nextMonthBtn = document.getElementById('next-month');
+        
+        let currentDate = new Date();
+        let currentMonth = currentDate.getMonth();
+        let currentYear = currentDate.getFullYear();
+        
+        function generateCalendar(month, year) {
+            const monthNames = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
+            
+            // Устанавливаем заголовок календаря
+            calendarTitle.textContent = `${monthNames[month]} ${year}`;
+            
+            // Очищаем дни календаря
+            calendarDays.innerHTML = '';
+            
+            // Получаем первый день месяца
+            const firstDay = new Date(year, month, 1);
+            // Получаем последний день месяца
+            const lastDay = new Date(year, month + 1, 0);
+            
+            // Получаем день недели первого дня (0 - воскресенье, 6 - суббота)
+            let firstDayIndex = firstDay.getDay();
+            // Преобразуем для российского календаря (0 - понедельник, 6 - воскресенье)
+            firstDayIndex = firstDayIndex === 0 ? 6 : firstDayIndex - 1;
+            
+            // Добавляем дни предыдущего месяца
+            const prevLastDay = new Date(year, month, 0).getDate();
+            for (let i = prevLastDay - firstDayIndex + 1; i <= prevLastDay; i++) {
+                const dayElement = document.createElement('div');
+                dayElement.textContent = i;
+                dayElement.classList.add('calendar-day', 'other-month');
+                calendarDays.appendChild(dayElement);
+            }
+            
+            // Добавляем дни текущего месяца
+            const today = new Date();
+            for (let i = 1; i <= lastDay.getDate(); i++) {
+                const dayElement = document.createElement('div');
+                dayElement.textContent = i;
+                dayElement.classList.add('calendar-day');
+                
+                // Выделяем текущий день
+                if (i === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
+                    dayElement.classList.add('current');
+                }
+                
+                calendarDays.appendChild(dayElement);
+            }
+            
+            // Добавляем дни следующего месяца
+            const daysToAdd = 42 - (firstDayIndex + lastDay.getDate());
+            for (let i = 1; i <= daysToAdd; i++) {
+                const dayElement = document.createElement('div');
+                dayElement.textContent = i;
+                dayElement.classList.add('calendar-day', 'other-month');
+                calendarDays.appendChild(dayElement);
+            }
+        }
+        
+        // Инициализация календаря
+        generateCalendar(currentMonth, currentYear);
+        
+        // Обработчики кнопок навигации по месяцам
+        prevMonthBtn.addEventListener('click', function() {
+            currentMonth--;
+            if (currentMonth < 0) {
+                currentMonth = 11;
+                currentYear--;
+            }
+            generateCalendar(currentMonth, currentYear);
+        });
+        
+        nextMonthBtn.addEventListener('click', function() {
+            currentMonth++;
+            if (currentMonth > 11) {
+                currentMonth = 0;
+                currentYear++;
+            }
+            generateCalendar(currentMonth, currentYear);
+        });
+        
+        // Синхронизация форм на всех вкладках
+        const profileForm = document.getElementById('profile-form');
+        const emailForm = document.getElementById('email-form');
+        
+        if (profileForm && emailForm) {
+            // Когда изменяется какое-либо поле в первой форме
+            profileForm.querySelectorAll('input, select').forEach(input => {
+                input.addEventListener('change', function() {
+                    // Находим соответствующее поле во второй форме
+                    const correspondingInput = emailForm.querySelector(`[name="${input.name}"]`);
+                    if (correspondingInput) {
+                        correspondingInput.value = input.value;
+                    }
+                });
+            });
+            
+            // Когда изменяется email во второй форме
+            emailForm.querySelector('[name="email"]').addEventListener('change', function() {
+                profileForm.querySelector('[name="email"]').value = this.value;
+            });
+        }
+    });
+</script>
+{% endblock %} 

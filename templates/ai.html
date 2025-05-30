@@ -1,0 +1,574 @@
+{% extends "base.html" %}
+
+{% block title %}Нейросети{% endblock %}
+
+{% block content %}
+<div class="ai-page-container">
+    <div class="ai-page-header">
+        <h1 class="display-5 fw-bold mb-4">Нейросети</h1>
+        <p class="lead mb-5">Выберите категорию и нейросеть для взаимодействия</p>
+    </div>
+    
+    <!-- Категории -->
+    <div class="ai-category-tabs mb-4">
+        <ul class="nav nav-pills nav-fill" id="aiCategoryTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="all-tab" data-bs-toggle="tab" 
+                    data-bs-target="#all" type="button" role="tab" aria-selected="true">
+                    Все
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="business-tab" data-bs-toggle="tab" 
+                    data-bs-target="#business" type="button" role="tab" aria-selected="false">
+                    Бизнес-модели
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="opensource-tab" data-bs-toggle="tab" 
+                    data-bs-target="#opensource" type="button" role="tab" aria-selected="false">
+                    Open Source
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="multimodal-tab" data-bs-toggle="tab" 
+                    data-bs-target="#multimodal" type="button" role="tab" aria-selected="false">
+                    Мультимодальные
+                </button>
+            </li>
+        </ul>
+    </div>
+    
+    <!-- Содержимое категорий -->
+    <div class="tab-content" id="aiCategoryTabsContent">
+        <!-- Все модели -->
+        <div class="tab-pane fade show active" id="all" role="tabpanel" aria-labelledby="all-tab">
+            <div class="row g-4">
+                <!-- DeepSeek -->
+                <div class="col-md-6 col-lg-4">
+                    <div class="ai-app-card deepseek-card" data-model="deepseek" data-category="business opensource">
+                        <div class="ai-app-icon">
+                            <img src="{{ url_for('static', filename='img/ai-logos/deepseek.png') }}" alt="DeepSeek" class="ai-logo">
+                        </div>
+                        <div class="ai-app-info">
+                            <h3>DeepSeek</h3>
+                            <p>Мощная модель с расширенными возможностями для понимания и генерации текста</p>
+                            <div class="ai-app-meta">
+                                <span class="ai-rating">
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star-half-alt"></i>
+                                </span>
+                                <span class="ai-type">LLM</span>
+                            </div>
+                            <div class="ai-app-actions">
+                                <a href="https://chat.deepseek.com/" target="_blank" class="btn btn-outline-primary ai-visit-btn">
+                                    <i class="fas fa-external-link-alt me-2"></i>Перейти
+                                </a>
+                                <button class="btn btn-primary ai-connect-btn" data-model="deepseek">
+                                    <i class="fas fa-bolt me-2"></i>Использовать
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- ChatGPT -->
+                <div class="col-md-6 col-lg-4">
+                    <div class="ai-app-card chatgpt-card" data-model="chatgpt" data-category="business">
+                        <div class="ai-app-icon">
+                            <img src="{{ url_for('static', filename='img/ai-logos/chatgpt.png') }}" alt="ChatGPT" class="ai-logo">
+                        </div>
+                        <div class="ai-app-info">
+                            <h3>ChatGPT</h3>
+                            <p>Популярная модель от OpenAI для разнообразных задач по обработке языка</p>
+                            <div class="ai-app-meta">
+                                <span class="ai-rating">
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                </span>
+                                <span class="ai-type">LLM</span>
+                            </div>
+                            <div class="ai-app-actions">
+                                <a href="https://chat.openai.com/" target="_blank" class="btn btn-outline-primary ai-visit-btn">
+                                    <i class="fas fa-external-link-alt me-2"></i>Перейти
+                                </a>
+                                <button class="btn btn-primary ai-connect-btn" data-model="chatgpt">
+                                    <i class="fas fa-bolt me-2"></i>Использовать
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Qwen -->
+                <div class="col-md-6 col-lg-4">
+                    <div class="ai-app-card qwen-card" data-model="qwen" data-category="business opensource">
+                        <div class="ai-app-icon">
+                            <img src="{{ url_for('static', filename='img/ai-logos/qwen.png') }}" alt="Qwen" class="ai-logo">
+                        </div>
+                        <div class="ai-app-info">
+                            <h3>Qwen</h3>
+                            <p>Инновационная языковая модель с поддержкой многоязычности от Alibaba</p>
+                            <div class="ai-app-meta">
+                                <span class="ai-rating">
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="far fa-star"></i>
+                                </span>
+                                <span class="ai-type">LLM</span>
+                            </div>
+                            <div class="ai-app-actions">
+                                <a href="https://chat.qwen.ai/" target="_blank" class="btn btn-outline-primary ai-visit-btn">
+                                    <i class="fas fa-external-link-alt me-2"></i>Перейти
+                                </a>
+                                <button class="btn btn-primary ai-connect-btn" data-model="qwen">
+                                    <i class="fas fa-bolt me-2"></i>Использовать
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Gemini -->
+                <div class="col-md-6 col-lg-4">
+                    <div class="ai-app-card gemini-card" data-model="gemini" data-category="business multimodal">
+                        <div class="ai-app-icon">
+                            <img src="{{ url_for('static', filename='img/ai-logos/gemini.png') }}" alt="Gemini" class="ai-logo">
+                        </div>
+                        <div class="ai-app-info">
+                            <h3>Gemini 2.5</h3>
+                            <p>Новейшая многомодальная модель от Google с продвинутыми возможностями</p>
+                            <div class="ai-app-meta">
+                                <span class="ai-rating">
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star-half-alt"></i>
+                                </span>
+                                <span class="ai-type">Multimodal</span>
+                            </div>
+                            <div class="ai-app-actions">
+                                <a href="https://gemini.google.com/" target="_blank" class="btn btn-outline-primary ai-visit-btn">
+                                    <i class="fas fa-external-link-alt me-2"></i>Перейти
+                                </a>
+                                <button class="btn btn-primary ai-connect-btn" data-model="gemini">
+                                    <i class="fas fa-bolt me-2"></i>Использовать
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Claude -->
+                <div class="col-md-6 col-lg-4">
+                    <div class="ai-app-card claude-card" data-model="claude" data-category="business multimodal">
+                        <div class="ai-app-icon">
+                            <img src="{{ url_for('static', filename='img/ai-logos/claude.png') }}" alt="Claude" class="ai-logo">
+                        </div>
+                        <div class="ai-app-info">
+                            <h3>Claude</h3>
+                            <p>Модель от Anthropic с акцентом на безопасность и этичность ответов</p>
+                            <div class="ai-app-meta">
+                                <span class="ai-rating">
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star-half-alt"></i>
+                                </span>
+                                <span class="ai-type">LLM</span>
+                            </div>
+                            <div class="ai-app-actions">
+                                <a href="https://www.anthropic.com/claude/sonnet" target="_blank" class="btn btn-outline-primary ai-visit-btn">
+                                    <i class="fas fa-external-link-alt me-2"></i>Перейти
+                                </a>
+                                <button class="btn btn-primary ai-connect-btn" data-model="claude">
+                                    <i class="fas fa-bolt me-2"></i>Использовать
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Mistral -->
+                <div class="col-md-6 col-lg-4">
+                    <div class="ai-app-card mistral-card" data-model="mistral" data-category="opensource">
+                        <div class="ai-app-icon">
+                            <img src="{{ url_for('static', filename='img/ai-logos/mistral.png') }}" alt="Mistral" class="ai-logo">
+                        </div>
+                        <div class="ai-app-info">
+                            <h3>Mistral</h3>
+                            <p>Быстрая и легкая модель с хорошим балансом производительности и точности</p>
+                            <div class="ai-app-meta">
+                                <span class="ai-rating">
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="far fa-star"></i>
+                                </span>
+                                <span class="ai-type">LLM</span>
+                            </div>
+                            <div class="ai-app-actions">
+                                <a href="https://chat.mistral.ai/" target="_blank" class="btn btn-outline-primary ai-visit-btn">
+                                    <i class="fas fa-external-link-alt me-2"></i>Перейти
+                                </a>
+                                <button class="btn btn-primary ai-connect-btn" data-model="mistral">
+                                    <i class="fas fa-bolt me-2"></i>Использовать
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Llama 3 -->
+                <div class="col-md-6 col-lg-4">
+                    <div class="ai-app-card llama-card" data-model="llama" data-category="opensource">
+                        <div class="ai-app-icon">
+                            <img src="{{ url_for('static', filename='img/ai-logos/llama.png') }}" alt="Llama" class="ai-logo">
+                        </div>
+                        <div class="ai-app-info">
+                            <h3>Llama 3</h3>
+                            <p>Открытая языковая модель от Meta с высокой производительностью и гибкостью</p>
+                            <div class="ai-app-meta">
+                                <span class="ai-rating">
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="far fa-star"></i>
+                                </span>
+                                <span class="ai-type">LLM</span>
+                            </div>
+                            <div class="ai-app-actions">
+                                <a href="https://openrouter.ai/chat?models=nvidia/llama-3.1-nemotron-ultra-253b-v1:free" target="_blank" class="btn btn-outline-primary ai-visit-btn">
+                                    <i class="fas fa-external-link-alt me-2"></i>Перейти
+                                </a>
+                                <button class="btn btn-primary ai-connect-btn" data-model="llama">
+                                    <i class="fas fa-bolt me-2"></i>Использовать
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Gemma -->
+                <div class="col-md-6 col-lg-4">
+                    <div class="ai-app-card gemma-card" data-model="gemma" data-category="opensource">
+                        <div class="ai-app-icon">
+                            <img src="{{ url_for('static', filename='img/ai-logos/gemma.png') }}" alt="Gemma" class="ai-logo">
+                        </div>
+                        <div class="ai-app-info">
+                            <h3>Gemma 3</h3>
+                            <p>Легковесная открытая модель от Google, оптимизированная для локального использования</p>
+                            <div class="ai-app-meta">
+                                <span class="ai-rating">
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="far fa-star"></i>
+                                </span>
+                                <span class="ai-type">LLM</span>
+                            </div>
+                            <div class="ai-app-actions">
+                                <a href="https://openrouter.ai/chat?models=google/gemma-3-27b-it:free" target="_blank" class="btn btn-outline-primary ai-visit-btn">
+                                    <i class="fas fa-external-link-alt me-2"></i>Перейти
+                                </a>
+                                <button class="btn btn-primary ai-connect-btn" data-model="gemma">
+                                    <i class="fas fa-bolt me-2"></i>Использовать
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Бизнес-модели -->
+        <div class="tab-pane fade" id="business" role="tabpanel" aria-labelledby="business-tab">
+            <div class="row g-4" id="business-models"></div>
+        </div>
+        
+        <!-- Open Source -->
+        <div class="tab-pane fade" id="opensource" role="tabpanel" aria-labelledby="opensource-tab">
+            <div class="row g-4" id="opensource-models"></div>
+        </div>
+        
+        <!-- Мультимодальные -->
+        <div class="tab-pane fade" id="multimodal" role="tabpanel" aria-labelledby="multimodal-tab">
+            <div class="row g-4" id="multimodal-models"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для ввода API ключа -->
+<div class="modal fade" id="apiKeyModal" tabindex="-1" aria-labelledby="apiKeyModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="apiKeyModalLabel">Подключение к <span id="selectedModelName"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="api-key-form">
+                    <div class="mb-3">
+                        <label for="api-key-input" class="form-label">API ключ:</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-key"></i></span>
+                            <input type="password" class="form-control" id="api-key-input" placeholder="Введите ваш API ключ" required>
+                            <button class="btn btn-outline-secondary" type="button" id="toggle-key-visibility">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        <div class="form-text" id="api-key-help"></div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" id="connect-button">Подключиться</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для диалога с ИИ -->
+<div class="modal fade" id="chatModal" tabindex="-1" aria-labelledby="chatModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="chatModalLabel">Диалог с <span id="chatModelName"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="chat-messages" id="chat-messages">
+                    <div class="system-message">
+                        <div class="message-content">
+                            <p>Привет! Я <span id="aiModelNameInChat"></span>. Чем я могу вам помочь?</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="input-group">
+                    <textarea class="form-control" id="message-input" placeholder="Введите сообщение..." rows="2"></textarea>
+                    <button class="btn btn-primary" type="button" id="send-message-btn">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Элементы модального окна для API ключа
+    const apiKeyModal = new bootstrap.Modal(document.getElementById('apiKeyModal'));
+    const selectedModelName = document.getElementById('selectedModelName');
+    const apiKeyInput = document.getElementById('api-key-input');
+    const apiKeyHelp = document.getElementById('api-key-help');
+    const toggleKeyVisibility = document.getElementById('toggle-key-visibility');
+    const connectButton = document.getElementById('connect-button');
+    
+    // Элементы модального окна для диалога
+    const chatModal = new bootstrap.Modal(document.getElementById('chatModal'));
+    const chatModelName = document.getElementById('chatModelName');
+    const aiModelNameInChat = document.getElementById('aiModelNameInChat');
+    const chatMessages = document.getElementById('chat-messages');
+    const messageInput = document.getElementById('message-input');
+    const sendMessageBtn = document.getElementById('send-message-btn');
+    
+    // Элементы для категорий
+    const businessModelsContainer = document.getElementById('business-models');
+    const opensourceModelsContainer = document.getElementById('opensource-models');
+    const multimodalModelsContainer = document.getElementById('multimodal-models');
+    
+    // Информация об API ключах для разных моделей
+    const apiKeyInfo = {
+        'deepseek': 'Получите API ключ на <a href="https://chat.deepseek.com/settings" target="_blank">chat.deepseek.com/settings</a>',
+        'chatgpt': 'Получите API ключ на <a href="https://platform.openai.com/api-keys" target="_blank">platform.openai.com/api-keys</a>',
+        'qwen': 'Получите API ключ на <a href="https://tongyi.aliyun.com/" target="_blank">tongyi.aliyun.com</a>',
+        'gemini': 'Получите API ключ на <a href="https://ai.google.dev/tutorials/setup" target="_blank">ai.google.dev/tutorials/setup</a>',
+        'claude': 'Получите API ключ на <a href="https://console.anthropic.com/settings/keys" target="_blank">console.anthropic.com/settings/keys</a>',
+        'mistral': 'Получите API ключ на <a href="https://console.mistral.ai/api-keys/" target="_blank">console.mistral.ai/api-keys</a>',
+        'llama': 'Модель доступна на <a href="https://www.llama.com/" target="_blank">llama.com</a>',
+        'gemma': 'Модель доступна через <a href="https://gemma.dev/" target="_blank">gemma.dev</a>'
+    };
+    
+    // Названия моделей для отображения
+    const modelDisplayNames = {
+        'deepseek': 'DeepSeek',
+        'chatgpt': 'ChatGPT',
+        'qwen': 'Qwen',
+        'gemini': 'Gemini 2.5',
+        'claude': 'Claude',
+        'mistral': 'Mistral',
+        'llama': 'Llama 3',
+        'gemma': 'Gemma 3'
+    };
+    
+    let currentModel = null;
+    let currentApiKey = null;
+    
+    // Заполнение категорий при загрузке
+    fillCategories();
+    
+    // Обработчик для кнопок "Использовать"
+    document.querySelectorAll('.ai-connect-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const model = this.getAttribute('data-model');
+            currentModel = model;
+            
+            // Заполняем модальное окно
+            selectedModelName.textContent = modelDisplayNames[model];
+            apiKeyHelp.innerHTML = apiKeyInfo[model];
+            
+            // Показываем модальное окно
+            apiKeyModal.show();
+        });
+    });
+    
+    // Обработчик для кнопки переключения видимости ключа
+    toggleKeyVisibility.addEventListener('click', function() {
+        if (apiKeyInput.type === 'password') {
+            apiKeyInput.type = 'text';
+            toggleKeyVisibility.innerHTML = '<i class="fas fa-eye-slash"></i>';
+        } else {
+            apiKeyInput.type = 'password';
+            toggleKeyVisibility.innerHTML = '<i class="fas fa-eye"></i>';
+        }
+    });
+    
+    // Обработчик для кнопки "Подключиться"
+    connectButton.addEventListener('click', function() {
+        const apiKey = apiKeyInput.value.trim();
+        
+        if (!apiKey) {
+            alert('Пожалуйста, введите API ключ');
+            return;
+        }
+        
+        // Сохраняем API ключ
+        currentApiKey = apiKey;
+        
+        // Закрываем модальное окно с API ключом
+        apiKeyModal.hide();
+        
+        // Заполняем модальное окно чата
+        chatModelName.textContent = modelDisplayNames[currentModel];
+        aiModelNameInChat.textContent = modelDisplayNames[currentModel];
+        
+        // Очищаем чат перед открытием
+        chatMessages.innerHTML = `
+            <div class="system-message">
+                <div class="message-content">
+                    <p>Привет! Я ${modelDisplayNames[currentModel]}. Чем я могу вам помочь?</p>
+                </div>
+            </div>
+        `;
+        
+        // Показываем модальное окно чата
+        chatModal.show();
+    });
+    
+    // Обработчик для отправки сообщения
+    sendMessageBtn.addEventListener('click', sendMessage);
+    messageInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
+    
+    // Функция заполнения категорий
+    function fillCategories() {
+        // Получаем все карточки нейросетей
+        const cards = document.querySelectorAll('.ai-app-card');
+        
+        // Для каждой карточки
+        cards.forEach(card => {
+            const categories = card.getAttribute('data-category').split(' ');
+            
+            // Проверяем, к каким категориям относится карточка
+            categories.forEach(category => {
+                const container = document.getElementById(`${category}-models`);
+                if (container) {
+                    // Клонируем карточку и добавляем в соответствующий контейнер
+                    const clone = card.closest('.col-md-6').cloneNode(true);
+                    container.appendChild(clone);
+                    
+                    // Добавляем обработчик события для клонированной кнопки
+                    const connectBtn = clone.querySelector('.ai-connect-btn');
+                    if (connectBtn) {
+                        connectBtn.addEventListener('click', function() {
+                            const model = this.getAttribute('data-model');
+                            currentModel = model;
+                            
+                            // Заполняем модальное окно
+                            selectedModelName.textContent = modelDisplayNames[model];
+                            apiKeyHelp.innerHTML = apiKeyInfo[model];
+                            
+                            // Показываем модальное окно
+                            apiKeyModal.show();
+                        });
+                    }
+                }
+            });
+        });
+    }
+    
+    function sendMessage() {
+        const message = messageInput.value.trim();
+        if (!message) return;
+        
+        // Добавляем сообщение пользователя в чат
+        addUserMessage(message);
+        
+        // Очищаем поле ввода
+        messageInput.value = '';
+        
+        // Имитируем ответ от ИИ (в реальном приложении здесь будет API запрос)
+        setTimeout(() => {
+            addAIMessage(`Это тестовый ответ от модели ${modelDisplayNames[currentModel]} на ваше сообщение: "${message}"`);
+        }, 1000);
+    }
+    
+    function addUserMessage(text) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'user-message';
+        messageDiv.innerHTML = `
+            <div class="message-content">
+                <p>${text}</p>
+            </div>
+        `;
+        chatMessages.appendChild(messageDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+    
+    function addAIMessage(text) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'ai-message';
+        messageDiv.innerHTML = `
+            <div class="message-content">
+                <p>${text}</p>
+            </div>
+        `;
+        chatMessages.appendChild(messageDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+});
+</script>
+{% endblock %} 

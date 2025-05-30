@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block title %}Дашборды{% endblock %}
+
+{% block additional_head %}
+<style>
+    .dashboard-card {
+        border: none;
+        border-radius: 1rem;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        transition: all 0.3s ease;
+    }
+    
+    .dashboard-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+    
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--bs-primary);
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-label {
+        color: var(--bs-secondary);
+        font-size: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .department-table {
+        display: none;
+    }
+    
+    .department-table.show {
+        display: block;
+    }
+    
+    .table-card {
+        margin-top: 2rem;
+    }
+    
+    .employee-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        margin-right: 10px;
+    }
+    
+    .employee-name {
+        font-weight: 500;
+    }
+    
+    .department-name {
+        color: var(--bs-primary);
+        font-weight: 600;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h2 class="mb-4">
+                <i class="fas fa-tachometer-alt me-2"></i>Дашборд отдела
+                <span class="department-name">{{ current_user.department }}</span>
+            </h2>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card dashboard-card">
+                <div class="card-body text-center">
+                    <div class="stat-number">{{ department_count }}</div>
+                    <div class="stat-label">Сотрудников в отделе</div>
+                    <button class="btn btn-primary" id="showEmployees">
+                        <i class="fas fa-users me-2"></i>Показать сотрудников
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="department-table" id="employeesTable">
+        <div class="card table-card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-user-friends me-2"></i>Сотрудники отдела
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Фото</th>
+                                <th>Имя</th>
+                                <th>Фамилия</th>
+                                <th>Должность</th>
+                                <th>Email</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for employee in department_employees %}
+                            <tr>
+                                <td>
+                                    <img src="{{ url_for('profile_pics', filename=employee.profile_image) }}" 
+                                         alt="Фото профиля" 
+                                         class="employee-avatar">
+                                </td>
+                                <td class="employee-name">{{ employee.first_name }}</td>
+                                <td class="employee-name">{{ employee.last_name }}</td>
+                                <td>{{ employee.position }}</td>
+                                <td>{{ employee.email }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const showEmployeesBtn = document.getElementById('showEmployees');
+    const employeesTable = document.getElementById('employeesTable');
+    
+    showEmployeesBtn.addEventListener('click', function() {
+        employeesTable.classList.toggle('show');
+        
+        if (employeesTable.classList.contains('show')) {
+            showEmployeesBtn.innerHTML = '<i class="fas fa-users-slash me-2"></i>Скрыть сотрудников';
+        } else {
+            showEmployeesBtn.innerHTML = '<i class="fas fa-users me-2"></i>Показать сотрудников';
+        }
+    });
+});
+</script>
+{% endblock %} 

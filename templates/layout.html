@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if title %}{{ title }} - ТурбоHelper{% else %}ТурбоHelper{% endif %}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css">
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    
+    <!-- Пользовательские стили -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    
+    <!-- Стили для навигационной панели -->
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --primary-dark: #0056b3;
+            --text-light: #f8f9fa;
+            --text-dark: #212529;
+            --background-light: #ffffff;
+            --background-dark: #343a40;
+        }
+        
+        body {
+            background-color: var(--background-light);
+            color: var(--text-dark);
+        }
+        
+        body.dark-mode {
+            background-color: var(--background-dark);
+            color: var(--text-light);
+        }
+        
+        .navbar {
+            padding: 0.5rem 1rem;
+            background-color: var(--background-light) !important;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        body.dark-mode .navbar {
+            background-color: var(--background-dark) !important;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--primary-color) !important;
+        }
+        
+        .navbar-light .navbar-nav .nav-link {
+            color: var(--text-dark) !important;
+            font-weight: 500;
+        }
+        
+        body.dark-mode .navbar-light .navbar-nav .nav-link,
+        body.dark-mode .dropdown-toggle {
+            color: var(--text-light) !important;
+        }
+        
+        .dropdown-menu {
+            border: none;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        body.dark-mode .dropdown-menu {
+            background-color: var(--background-dark);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        body.dark-mode .dropdown-item {
+            color: var(--text-light);
+        }
+        
+        body.dark-mode .dropdown-item:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .user-avatar {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--primary-color);
+        }
+        
+        .main-container {
+            padding-top: 1rem;
+            padding-bottom: 2rem;
+        }
+        
+        .theme-toggle-btn {
+            background-color: transparent;
+            border: 2px solid #dee2e6;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #6c757d;
+            transition: all 0.2s;
+        }
+        
+        .theme-toggle-btn:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+        
+        body.dark-mode .card {
+            background-color: #2c3136;
+            border-color: #444;
+        }
+        
+        body.dark-mode .card-header {
+            background-color: rgba(255, 255, 255, 0.05);
+            border-color: #444;
+        }
+        
+        body.dark-mode .alert-info {
+            background-color: #204d74;
+            color: #fff;
+            border-color: #1b3f5f;
+        }
+        
+        body.dark-mode .alert-warning {
+            background-color: #8a6d3b;
+            color: #fff;
+            border-color: #7d6224;
+        }
+        
+        body.dark-mode .alert-danger {
+            background-color: #a94442;
+            color: #fff;
+            border-color: #8b2e2b;
+        }
+        
+        body.dark-mode .alert-success {
+            background-color: #3c763d;
+            color: #fff;
+            border-color: #2b542c;
+        }
+        
+        body.dark-mode .form-control {
+            background-color: #3a4047;
+            color: #fff;
+            border-color: #495057;
+        }
+        
+        body.dark-mode .form-control:focus {
+            background-color: #3a4047;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <!-- Навигационная панель -->
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{{ url_for('index') }}">ТурбоHelper</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav mr-auto">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <i class="fas fa-th-list mr-1"></i> Функции
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            {% if current_user.is_authenticated %}
+                                <a class="dropdown-item" href="{{ url_for('dashboard') }}">
+                                    <i class="fas fa-tachometer-alt mr-2"></i> Панель управления
+                                </a>
+                                <a class="dropdown-item" href="{{ url_for('qr_generator') }}">
+                                    <i class="fas fa-qrcode mr-2"></i> QR-генератор
+                                </a>
+                                <a class="dropdown-item" href="{{ url_for('ai') }}">
+                                    <i class="fas fa-robot mr-2"></i> AI-чат
+                                </a>
+                                <a class="dropdown-item" href="{{ url_for('analytics') }}">
+                                    <i class="fas fa-chart-bar mr-2"></i> Аналитика
+                                </a>
+                                <a class="dropdown-item" href="{{ url_for('companies') }}">
+                                    <i class="fas fa-building mr-2"></i> Информация о компаниях
+                                </a>
+                                {% if current_user.is_admin %}
+                                    <div class="dropdown-divider"></div>
+                                    <a class="dropdown-item" href="{{ url_for('admin') }}">
+                                        <i class="fas fa-users-cog mr-2"></i> Администрирование
+                                    </a>
+                                {% endif %}
+                            {% else %}
+                                <a class="dropdown-item" href="{{ url_for('login') }}">
+                                    <i class="fas fa-sign-in-alt mr-2"></i> Войдите, чтобы увидеть функции
+                                </a>
+                            {% endif %}
+                        </div>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    {% if current_user.is_authenticated %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <img src="{{ url_for('profile_pics', filename=current_user.profile_image) }}" alt="Аватар" class="user-avatar mr-2">
+                                {{ current_user.first_name }}
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-right" aria-labelledby="userDropdown">
+                                <a class="dropdown-item" href="{{ url_for('profile') }}">
+                                    <i class="fas fa-user-circle mr-2"></i> Профиль
+                                </a>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item" href="{{ url_for('logout') }}">
+                                    <i class="fas fa-sign-out-alt mr-2"></i> Выйти
+                                </a>
+                            </div>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('login') }}">
+                                <i class="fas fa-sign-in-alt mr-1"></i> Войти
+                            </a>
+                        </li>
+                    {% endif %}
+                    <li class="nav-item ml-2">
+                        <button id="themeToggle" class="theme-toggle-btn" title="Переключить тему">
+                            <i class="fas fa-moon"></i>
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Основной контент -->
+    <main class="container-fluid main-container">
+        <!-- Флеш-сообщения -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show mb-4">
+                        {{ message }}
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <!-- Блок контента -->
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Bootstrap JS, Popper.js, и jQuery -->
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.min.js"></script>
+    
+    <!-- Пользовательские скрипты -->
+    <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+    
+    <!-- Скрипт переключения темы -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const themeToggle = document.getElementById('themeToggle');
+            const themeIcon = themeToggle.querySelector('i');
+            
+            // Проверка сохраненной темы
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-mode');
+                themeIcon.classList.remove('fa-moon');
+                themeIcon.classList.add('fa-sun');
+            }
+            
+            // Обработчик переключения темы
+            themeToggle.addEventListener('click', function() {
+                document.body.classList.toggle('dark-mode');
+                
+                if (document.body.classList.contains('dark-mode')) {
+                    localStorage.setItem('theme', 'dark');
+                    themeIcon.classList.remove('fa-moon');
+                    themeIcon.classList.add('fa-sun');
+                } else {
+                    localStorage.setItem('theme', 'light');
+                    themeIcon.classList.remove('fa-sun');
+                    themeIcon.classList.add('fa-moon');
+                }
+            });
+        });
+    </script>
+</body>
+</html> 

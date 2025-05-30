@@ -1,0 +1,1537 @@
+{% extends "base.html" %}
+
+{% block title %}Аналитика{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="jumbotron text-center mt-4 mb-5">
+            <h1 class="display-4">Аналитика данных</h1>
+            <p class="lead">Загрузка, анализ и визуализация Excel данных</p>
+            <hr class="my-4">
+        </div>
+    </div>
+</div>
+
+<!-- Карточка для загрузки файла -->
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Шаг 1: Загрузка Excel файла</h5>
+    </div>
+    <div class="card-body">
+        <form id="excel-upload-form" enctype="multipart/form-data">
+            <div class="mb-3">
+                <label for="excelFile" class="form-label">Выберите Excel файл</label>
+                <input class="form-control" type="file" id="excelFile" name="excelFile" accept=".xlsx, .xls">
+                <div class="form-text">Поддерживаемые форматы: .xlsx, .xls</div>
+            </div>
+            <button type="submit" class="btn btn-primary">Загрузить</button>
+        </form>
+    </div>
+</div>
+
+<!-- Карточка для выбора листа Excel (отображается только если листов несколько) -->
+<div class="card mb-4" id="sheet-selection-card" style="display: none;">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Шаг 2: Выбор листа Excel</h5>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>Выберите лист Excel для анализа
+        </div>
+        <select id="sheet-selector" class="form-select mb-3">
+            <!-- Листы будут добавлены динамически -->
+        </select>
+        <button id="load-sheet" class="btn btn-primary">Загрузить выбранный лист</button>
+    </div>
+</div>
+
+<!-- Карточка с данными и выбором столбцов -->
+<div class="card mb-4" id="data-preview-card" style="display: none;">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Шаг 3: Выбор столбцов для анализа</h5>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>Отметьте столбцы, которые хотите использовать для анализа, нажав на <i class="far fa-square"></i> над заголовком столбца
+        </div>
+        <div class="table-responsive">
+            <table id="preview-table" class="table table-striped table-bordered">
+                <!-- Данные таблицы будут загружены динамически с чекбоксами над заголовками -->
+            </table>
+        </div>
+        <button id="apply-columns" class="btn btn-primary mt-3">Применить выбранные столбцы</button>
+    </div>
+</div>
+
+<!-- Карточка с результатами анализа -->
+<div class="card mb-4" id="results-card" style="display: none;">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Результаты анализа</h5>
+        <div class="btn-group">
+            <button id="toggle-percent" class="btn btn-light btn-sm">
+                <i class="fas fa-percentage"></i> Показать в %
+            </button>
+            <button id="export-excel" class="btn btn-light btn-sm ms-2">
+                <i class="fas fa-file-excel"></i> Экспорт
+            </button>
+        </div>
+    </div>
+    <div class="card-body">
+        <!-- Вкладки для переключения видов таблицы -->
+        <ul class="nav nav-tabs mb-3" id="resultTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="absolute-tab" data-bs-toggle="tab" data-bs-target="#absolute-content" type="button" role="tab" aria-controls="absolute-content" aria-selected="true">Таблица данных</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="percent-tab" data-bs-toggle="tab" data-bs-target="#percent-content" type="button" role="tab" aria-controls="percent-content" aria-selected="false">% от рынка</button>
+            </li>
+        </ul>
+        <div class="tab-content" id="resultTabsContent">
+            <!-- Контент вкладки с абсолютными значениями -->
+            <div class="tab-pane fade show active" id="absolute-content" role="tabpanel" aria-labelledby="absolute-tab">
+                <div id="absolute-table-container">
+                    <div class="mb-3" id="year-summary-container" style="display: none;">
+                        <div class="alert alert-info">
+                            <h6 class="mb-2">Статистика по годам:</h6>
+                            <div id="year-summary" class="row"></div>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table id="data-table" class="table table-striped table-bordered">
+                            <!-- Данные таблицы будут загружены динамически -->
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <!-- Контент вкладки с процентными значениями -->
+            <div class="tab-pane fade" id="percent-content" role="tabpanel" aria-labelledby="percent-tab">
+                <div id="percent-table-container">
+                    <div class="table-responsive">
+                        <table id="percent-table" class="table table-striped table-bordered">
+                            <!-- Данные таблицы с процентами будут загружены динамически -->
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Блок с диаграммами -->
+<div class="card" id="chart-card" style="display: none;">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Визуализация данных</h5>
+        <div class="d-flex">
+            <select id="year-filter" class="form-select form-select-sm me-2" style="width: auto;">
+                <option value="all">Все года</option>
+                <!-- Годы будут добавлены динамически -->
+            </select>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0" id="bar-chart-title">Столбчатая диаграмма</h6>
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-secondary btn-sm chart-download" data-chart="bar">
+                                <i class="fas fa-download"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="bar-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0" id="pie-chart-title">Круговая диаграмма</h6>
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-secondary btn-sm chart-download" data-chart="pie">
+                                <i class="fas fa-download"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="pie-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row" id="additional-charts">
+            <div class="col-md-12 mb-4">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0" id="line-chart-title">Динамика по годам</h6>
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-secondary btn-sm chart-download" data-chart="line">
+                                <i class="fas fa-download"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="line-chart" style="height: 500px;"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- SheetJS для работы с Excel -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<!-- Chart.js для визуализации данных -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Добавляем глобальные настройки Chart.js для лучшей видимости текста
+    Chart.defaults.color = '#000000';
+    Chart.defaults.font.weight = 'bold';
+    Chart.defaults.font.size = 14;
+    
+    // Добавляем стили для текста на диаграммах
+    const style = document.createElement('style');
+    style.textContent = `
+        .card-header { font-weight: bold; }
+        #bar-chart, #pie-chart, #line-chart { 
+            max-height: 600px;
+            background-color: rgba(255, 255, 255, 1); 
+            border-radius: 8px;
+        }
+        #chart-card .card-body {
+            background-color: rgba(255, 255, 255, 1);
+        }
+        .card {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+    `;
+    document.head.appendChild(style);
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        // Глобальные переменные для хранения данных
+        let excelData = null;
+        let columns = [];
+        let selectedColumns = [];
+        let dataTable = null;
+        let percentTable = null;
+        let barChart = null;
+        let pieChart = null;
+        let availableSheets = [];
+        let currentSheet = '';
+        
+        // Обработчик отправки формы загрузки файла
+        document.getElementById('excel-upload-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const fileInput = document.getElementById('excelFile');
+            
+            if (!fileInput.files.length) {
+                alert('Пожалуйста, выберите файл');
+                return;
+            }
+            
+            const file = fileInput.files[0];
+            
+            // Создаем FormData объект для отправки файла
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            // Анимация загрузки
+            const submitBtn = this.querySelector('button[type="submit"]');
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Загрузка...';
+            submitBtn.disabled = true;
+            
+            // Отправляем запрос на сервер
+            fetch('/api/analyze', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                // Сохраняем данные
+                excelData = data.data;
+                availableSheets = data.sheets || [];
+                currentSheet = data.current_sheet || '';
+                
+                // Если есть несколько листов, отображаем форму выбора листа
+                if (availableSheets.length > 1) {
+                    const sheetSelector = document.getElementById('sheet-selector');
+                    sheetSelector.innerHTML = '';
+                    
+                    availableSheets.forEach(sheet => {
+                        const option = document.createElement('option');
+                        option.value = sheet;
+                        option.textContent = sheet;
+                        if (sheet === currentSheet) {
+                            option.selected = true;
+                        }
+                        sheetSelector.appendChild(option);
+                    });
+                    
+                    // Показываем карточку выбора листа
+                    document.getElementById('sheet-selection-card').style.display = 'block';
+                } else {
+                    // Если лист только один, сразу переходим к предпросмотру данных
+                    displayDataPreview(excelData);
+                }
+            })
+            .catch(error => {
+                alert('Ошибка: ' + error.message);
+                console.error('Ошибка:', error);
+            })
+            .finally(() => {
+                // Восстанавливаем кнопку
+                submitBtn.innerHTML = 'Загрузить';
+                submitBtn.disabled = false;
+            });
+        });
+        
+        // Обработчик кнопки "Загрузить выбранный лист"
+        document.getElementById('load-sheet').addEventListener('click', function() {
+            const selectedSheet = document.getElementById('sheet-selector').value;
+            if (!selectedSheet) {
+                alert('Пожалуйста, выберите лист Excel');
+                return;
+            }
+            
+            // Создаем FormData объект
+            const formData = new FormData();
+            formData.append('file', document.getElementById('excelFile').files[0]);
+            formData.append('sheet_name', selectedSheet);
+            
+            // Анимация загрузки
+            const loadBtn = this;
+            loadBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Загрузка...';
+            loadBtn.disabled = true;
+            
+            // Отправляем запрос на сервер
+            fetch('/api/analyze', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                // Сохраняем данные
+                excelData = data.data;
+                currentSheet = data.current_sheet || '';
+                
+                // Отображаем данные в предпросмотре
+                displayDataPreview(excelData);
+            })
+            .catch(error => {
+                alert('Ошибка: ' + error.message);
+                console.error('Ошибка:', error);
+            })
+            .finally(() => {
+                // Восстанавливаем кнопку
+                loadBtn.innerHTML = 'Загрузить выбранный лист';
+                loadBtn.disabled = false;
+            });
+        });
+        
+        // Функция для отображения данных с чекбоксами над заголовками
+        function displayDataPreview(data) {
+            if (!data || !data.length) {
+                alert('Данные отсутствуют');
+                return;
+            }
+            
+            // Сохраняем заголовки
+            columns = data[0];
+            
+            // Создаем таблицу предпросмотра
+            const previewTable = document.getElementById('preview-table');
+            let tableHTML = '<thead><tr>';
+            
+            // Добавляем чекбоксы над заголовками
+            columns.forEach((column, index) => {
+                tableHTML += `<th>
+                    <div class="form-check d-flex justify-content-center mb-2">
+                        <input class="form-check-input column-checkbox" type="checkbox" value="${index}" id="column-${index}">
+                    </div>
+                    ${column}
+                </th>`;
+            });
+            tableHTML += '</tr></thead><tbody>';
+            
+            // Добавляем данные (пропускаем первую строку с заголовками)
+            for (let i = 1; i < Math.min(data.length, 10); i++) { // Показываем только первые 10 строк для предпросмотра
+                tableHTML += '<tr>';
+                data[i].forEach(cell => {
+                    tableHTML += `<td>${cell !== null && cell !== undefined ? cell : ''}</td>`;
+                });
+                tableHTML += '</tr>';
+            }
+            
+            // Если данных больше 10 строк, добавляем сообщение
+            if (data.length > 11) {
+                tableHTML += '<tr><td colspan="' + columns.length + '" class="text-center text-muted">...</td></tr>';
+            }
+            
+            tableHTML += '</tbody>';
+            previewTable.innerHTML = tableHTML;
+            
+            // Показываем карточку с предпросмотром данных
+            document.getElementById('data-preview-card').style.display = 'block';
+            
+            // Скрываем карточку выбора листа
+            document.getElementById('sheet-selection-card').style.display = 'none';
+        }
+        
+        // Обработчик кнопки "Применить выбранные столбцы"
+        document.getElementById('apply-columns').addEventListener('click', function() {
+            const checkboxes = document.querySelectorAll('.column-checkbox:checked');
+            
+            if (checkboxes.length === 0) {
+                alert('Пожалуйста, выберите хотя бы один столбец');
+                return;
+            }
+            
+            // Сохраняем выбранные столбцы
+            selectedColumns = Array.from(checkboxes).map(cb => parseInt(cb.value));
+            
+            // Анимация загрузки
+            const applyBtn = this;
+            applyBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Обработка...';
+            applyBtn.disabled = true;
+            
+            try {
+                // Проверка данных перед отправкой
+                if (!excelData || !Array.isArray(excelData) || excelData.length < 2) {
+                    throw new Error('Некорректный формат данных');
+                }
+                
+                // Отправляем данные на сервер для анализа
+                fetch('/api/analyze_columns', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        data: excelData,
+                        selectedColumns: selectedColumns
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+                    
+                    // Проверяем структуру данных
+                    if (!data.absolute_data || !Array.isArray(data.absolute_data) || !data.percent_data || !Array.isArray(data.percent_data)) {
+                        throw new Error('Некорректный формат данных в ответе сервера');
+                    }
+                    
+                    try {
+                        // Сохраняем данные для использования в диаграммах
+                        window.currentChartData = data.absolute_data;
+                        
+                        // Сохраняем метаданные, если они есть
+                        window.chartMetadata = data.metadata || {
+                            numeric_columns: [],
+                            year_columns: [],
+                            text_columns: [],
+                            available_years: []
+                        };
+                        
+                        // Заполняем таблицы данными
+                        createDataTable(data.absolute_data);
+                        createPercentTable(data.percent_data);
+                        
+                        // Создаем диаграммы с данными абсолютных значений
+                        createCharts(data.absolute_data, 'all');
+                        
+                        // Показываем карточки с результатами
+                        document.getElementById('results-card').style.display = 'block';
+                        document.getElementById('chart-card').style.display = 'block';
+                        
+                        // Прокручиваем к результатам
+                        document.getElementById('results-card').scrollIntoView({ behavior: 'smooth' });
+                    } catch (displayError) {
+                        console.error('Ошибка при отображении данных:', displayError);
+                        alert('Произошла ошибка при отображении результатов: ' + displayError.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Ошибка при анализе данных:', error);
+                    alert('Ошибка при анализе данных: ' + error.message);
+                })
+                .finally(() => {
+                    // Восстанавливаем кнопку
+                    applyBtn.innerHTML = 'Применить выбранные столбцы';
+                    applyBtn.disabled = false;
+                });
+            } catch (error) {
+                console.error('Ошибка перед отправкой запроса:', error);
+                alert('Ошибка: ' + error.message);
+                applyBtn.innerHTML = 'Применить выбранные столбцы';
+                applyBtn.disabled = false;
+            }
+        });
+        
+        // Обработчик переключения между абсолютными и процентными значениями (для совместимости)
+        document.getElementById('toggle-percent').addEventListener('click', function() {
+            const absoluteTab = document.getElementById('absolute-tab');
+            const percentTab = document.getElementById('percent-tab');
+            
+            if (absoluteTab.classList.contains('active')) {
+                // Переключаемся на вкладку с процентами
+                percentTab.click();
+                this.innerHTML = '<i class="fas fa-table"></i> Показать абсолютные';
+            } else {
+                // Переключаемся на вкладку с абсолютными значениями
+                absoluteTab.click();
+                this.innerHTML = '<i class="fas fa-percentage"></i> Показать в %';
+            }
+        });
+        
+        // Обработчик кнопки экспорта в Excel
+        document.getElementById('export-excel').addEventListener('click', function() {
+            // Определяем, какая таблица сейчас видима
+            const isPercentView = document.getElementById('absolute-tab').classList.contains('active') === false;
+            const tableId = isPercentView ? 'percent-table' : 'data-table';
+            
+            // Получаем выбранный год для фильтрации данных
+            const selectedYear = document.getElementById('year-filter').value;
+            
+            // Создаем новую книгу
+            const wb = XLSX.utils.book_new();
+            
+            // Получаем данные из таблицы
+            const table = document.getElementById(tableId);
+            let ws;
+            
+            if (selectedYear !== 'all' && window.currentChartData) {
+                // Фильтруем данные по выбранному году
+                const filteredData = filterDataForExport(window.currentChartData, selectedYear);
+                // Преобразуем отфильтрованные данные в формат для Excel
+                ws = XLSX.utils.aoa_to_sheet(filteredData);
+            } else {
+                // Используем всю таблицу
+                ws = XLSX.utils.table_to_sheet(table);
+            }
+            
+            // Добавляем лист в книгу
+            XLSX.utils.book_append_sheet(wb, ws, "Анализ данных");
+            
+            // Генерируем имя файла
+            const yearSuffix = selectedYear !== 'all' ? `_${selectedYear}` : '';
+            const fileName = isPercentView ? `Анализ_проценты${yearSuffix}.xlsx` : `Анализ_данные${yearSuffix}.xlsx`;
+            
+            // Скачиваем файл
+            XLSX.writeFile(wb, fileName);
+        });
+        
+        // Функция для фильтрации данных по году для экспорта
+        function filterDataForExport(data, selectedYear) {
+            if (!data || !Array.isArray(data) || data.length < 2) {
+                return [];
+            }
+            
+            console.log("Фильтрация данных для экспорта по году:", selectedYear);
+            
+            // Получаем заголовки
+            const headers = data[0];
+            
+            // Находим индекс столбца с выбранным годом
+            const yearIndex = headers.findIndex(header => {
+                if (!header) return false;
+                const headerStr = header.toString();
+                return headerStr === selectedYear;
+            });
+            
+            console.log("Индекс года для экспорта:", yearIndex);
+            
+            if (yearIndex === -1) {
+                console.log("Год не найден в заголовках, возвращаем все данные");
+                return data; // Если год не найден, возвращаем все данные
+            }
+            
+            // Формируем новый массив с заголовками
+            const filteredData = [headers];
+            
+            // Фильтруем строки, где значение года > 0
+            for (let i = 1; i < data.length; i++) {
+                const row = data[i];
+                if (!Array.isArray(row) || row.length <= yearIndex) continue;
+                
+                const yearValue = row[yearIndex];
+                // Добавляем строки, где значение года > 0
+                if (typeof yearValue === 'number' && yearValue > 0) {
+                    filteredData.push(row);
+                }
+            }
+            
+            console.log("Отфильтрованные данные для экспорта:", filteredData.length, "строк");
+            return filteredData;
+        }
+        
+        // Функция для фильтрации данных по выбранному году
+        function filterData(chartData, headers, yearColumns, filterYear) {
+            if (filterYear === 'all') {
+                // Если выбраны все года, возвращаем исходные данные
+                return chartData;
+            }
+            
+            console.log("Фильтрация данных по году:", filterYear);
+            console.log("Годовые столбцы:", yearColumns);
+            
+            // Если использованы метаданные, то обновим выбранный год в элементах управления
+            document.querySelectorAll('.year-filter-label').forEach(el => {
+                el.textContent = filterYear === 'all' ? 'Все года' : `Данные за ${filterYear} год`;
+            });
+            
+            // Находим индекс столбца с выбранным годом
+            const yearIndex = headers.findIndex(header => {
+                if (!header) return false;
+                const headerStr = header.toString();
+                return headerStr === filterYear;
+            });
+            
+            console.log("Индекс выбранного года:", yearIndex);
+            
+            if (yearIndex === -1 || !yearColumns.includes(yearIndex)) {
+                console.log("Год не найден в заголовках или не является годовым столбцом");
+                return chartData; // Если год не найден, возвращаем все данные
+            }
+            
+            // Определяем индекс текстового столбца для названий
+            let textColumnIndex = 0;
+            if (window.chartMetadata && window.chartMetadata.text_columns && window.chartMetadata.text_columns.length > 0) {
+                textColumnIndex = window.chartMetadata.text_columns[0];
+            }
+            
+            // Фильтруем данные с сохранением всех текстовых столбцов
+            // Сначала сортируем по выбранному году (от большего к меньшему)
+            const sortedData = [...chartData].sort((a, b) => {
+                if (!Array.isArray(a) || !Array.isArray(b)) return 0;
+                
+                const valA = a[yearIndex];
+                const valB = b[yearIndex];
+                
+                // Исключаем строку заголовков
+                if (a === headers) return -1;
+                if (b === headers) return 1;
+                
+                // Сравниваем значения года (если числовые)
+                if (typeof valA === 'number' && typeof valB === 'number') {
+                    return valB - valA; // Сортировка по убыванию
+                }
+                
+                return 0;
+            });
+            
+            // Затем фильтруем строки, где значение года > 0
+            const filteredData = [headers, ...sortedData.slice(1).filter(row => {
+                if (!Array.isArray(row) || row.length <= yearIndex) return false;
+                const value = row[yearIndex];
+                return typeof value === 'number' && value > 0;
+            })];
+            
+            console.log("Отфильтрованные данные:", filteredData.length, "строк");
+            return filteredData;
+        }
+        
+        // Функция для обновления выпадающего списка годов
+        function updateYearFilter(yearLabels) {
+            const yearFilter = document.getElementById('year-filter');
+            yearFilter.innerHTML = '<option value="all">Все года</option>';
+            
+            // Проверяем наличие метаданных с годами
+            if (window.chartMetadata && window.chartMetadata.available_years && window.chartMetadata.available_years.length > 0) {
+                // Используем года из метаданных
+                window.chartMetadata.available_years.forEach(year => {
+                    const option = document.createElement('option');
+                    option.value = year;
+                    option.textContent = year;
+                    yearFilter.appendChild(option);
+                });
+            } else if (yearLabels && yearLabels.length > 0) {
+                // Используем переданные метки (для обратной совместимости)
+                yearLabels.forEach(year => {
+                    const option = document.createElement('option');
+                    option.value = year;
+                    option.textContent = year;
+                    yearFilter.appendChild(option);
+                });
+            }
+            
+            // Удаляем старый обработчик и добавляем новый, чтобы избежать дублирования
+            yearFilter.removeEventListener('change', yearFilterChangeHandler);
+            yearFilter.addEventListener('change', yearFilterChangeHandler);
+        }
+        
+        // Обработчик события изменения года для вынесения в отдельную функцию
+        function yearFilterChangeHandler() {
+            const selectedYear = this.value;
+            console.log("Выбран год:", selectedYear);
+            
+            // Обновляем фильтрацию данных в таблицах
+            if (selectedYear !== 'all' && window.currentChartData) {
+                // Получаем заголовки
+                const headers = window.currentChartData[0];
+                console.log("Заголовки данных:", headers);
+                
+                // Находим индекс столбца с выбранным годом
+                const yearIndex = headers.findIndex(header => {
+                    if (!header) return false;
+                    
+                    const headerStr = header.toString();
+                    return headerStr === selectedYear;
+                });
+                
+                console.log("Индекс года в данных:", yearIndex);
+                
+                if (yearIndex !== -1) {
+                    // Обновляем таблицу с данными
+                    const filteredData = filterDataForExport(window.currentChartData, selectedYear);
+                    if (filteredData.length > 1) {
+                        createDataTable(filteredData);
+                    }
+                }
+            }
+            
+            // Обновляем диаграммы
+            createCharts(window.currentChartData, selectedYear);
+            
+            // Обновляем отображение статистики по годам
+            const yearSummaryContainer = document.getElementById('year-summary-container');
+            if (selectedYear === 'all') {
+                yearSummaryContainer.style.display = 'block';
+            } else {
+                // Показываем статистику только для выбранного года
+                const yearSummary = document.getElementById('year-summary');
+                const yearCards = yearSummary.querySelectorAll('.card');
+                
+                let hasVisibleCard = false;
+                yearCards.forEach(card => {
+                    const cardYear = card.querySelector('.card-header strong').textContent;
+                    if (cardYear === selectedYear) {
+                        card.closest('.col-md-4').style.display = 'block';
+                        hasVisibleCard = true;
+                    } else {
+                        card.closest('.col-md-4').style.display = 'none';
+                    }
+                });
+                
+                yearSummaryContainer.style.display = hasVisibleCard ? 'block' : 'none';
+            }
+        }
+        
+        // Функция для создания таблицы с абсолютными значениями
+        function createDataTable(data) {
+            if (!data || !data.length) return;
+            
+            const tableContainer = document.getElementById('data-table');
+            let tableHTML = '<thead><tr>';
+            
+            // Добавляем заголовки
+            const headers = data[0];
+            headers.forEach(header => {
+                tableHTML += `<th>${header}</th>`;
+            });
+            tableHTML += '</tr></thead><tbody>';
+            
+            // Добавляем данные (пропускаем первую строку с заголовками)
+            for (let i = 1; i < data.length; i++) {
+                tableHTML += '<tr>';
+                data[i].forEach(cell => {
+                    // Форматируем числовые значения с разделителями тысяч
+                    if (typeof cell === 'number') {
+                        tableHTML += `<td>${cell.toLocaleString('ru-RU')}</td>`;
+                    } else {
+                        tableHTML += `<td>${cell !== null && cell !== undefined ? cell : ''}</td>`;
+                    }
+                });
+                tableHTML += '</tr>';
+            }
+            
+            tableHTML += '</tbody>';
+            tableContainer.innerHTML = tableHTML;
+        }
+        
+        // Функция для создания таблицы с процентными значениями
+        function createPercentTable(data) {
+            if (!data || !data.length) return;
+            
+            const tableContainer = document.getElementById('percent-table');
+            let tableHTML = '<thead><tr>';
+            
+            // Добавляем заголовки
+            const headers = data[0];
+            headers.forEach(header => {
+                tableHTML += `<th>${header}</th>`;
+            });
+            tableHTML += '</tr></thead><tbody>';
+            
+            // Добавляем данные (пропускаем первую строку с заголовками)
+            for (let i = 1; i < data.length; i++) {
+                tableHTML += '<tr>';
+                data[i].forEach((cell, index) => {
+                    // Если это процентное значение, форматируем соответственно
+                    if (typeof cell === 'number' && headers[index] && typeof headers[index] === 'string' && headers[index].includes('% от рынка')) {
+                        tableHTML += `<td>${cell.toFixed(2)}%</td>`;
+                    } 
+                    // Форматируем обычные числовые значения с разделителями тысяч
+                    else if (typeof cell === 'number') {
+                        tableHTML += `<td>${cell.toLocaleString('ru-RU')}</td>`;
+                    } 
+                    // Для остальных типов данных
+                    else {
+                        tableHTML += `<td>${cell !== null && cell !== undefined ? cell : ''}</td>`;
+                    }
+                });
+                tableHTML += '</tr>';
+            }
+            
+            // Добавляем строку с итогами для всех столбцов с процентами
+            let hasPercentColumns = headers.some(header => header && typeof header === 'string' && header.includes('% от рынка'));
+            if (hasPercentColumns) {
+                tableHTML += '<tr class="table-secondary">';
+                headers.forEach((header, index) => {
+                    if (header && typeof header === 'string' && header.includes('% от рынка')) {
+                        tableHTML += `<td><strong>100%</strong></td>`;
+                    } else {
+                        tableHTML += `<td><strong>${index === 0 ? 'Итого:' : ''}</strong></td>`;
+                    }
+                });
+                tableHTML += '</tr>';
+            }
+            
+            tableHTML += '</tbody>';
+            tableContainer.innerHTML = tableHTML;
+        }
+        
+        // Функция для создания всех диаграмм
+        function createCharts(chartData, selectedYear) {
+            if (!chartData || !Array.isArray(chartData) || chartData.length < 2) {
+                console.error("Нет данных для создания диаграмм");
+                return;
+            }
+            
+            console.log("Создание диаграмм с данными:", chartData.length, "строк");
+            
+            // Получаем заголовки
+            const headers = chartData[0];
+            
+            // Определяем столбцы с годами и текстовые столбцы из метаданных
+            let textColumns = [];
+            let yearColumns = [];
+            let numericColumns = [];
+            
+            if (window.chartMetadata) {
+                textColumns = window.chartMetadata.text_columns || [];
+                yearColumns = window.chartMetadata.year_columns || [];
+                numericColumns = window.chartMetadata.numeric_columns || [];
+            }
+            
+            // Выбираем текстовый столбец для названий (используем первый доступный)
+            let labelColumnIndex = 0;
+            if (textColumns.length > 0) {
+                labelColumnIndex = textColumns[0];
+            }
+            
+            // Получаем годовые метки
+            const yearLabels = [];
+            for (const colIndex of yearColumns) {
+                if (headers[colIndex]) {
+                    yearLabels.push(headers[colIndex].toString());
+                }
+            }
+            
+            // Показываем или скрываем блок с линейной диаграммой в зависимости от наличия годовых данных
+            const additionalChartsBlock = document.getElementById('additional-charts');
+            if (yearLabels.length > 1) {
+                additionalChartsBlock.style.display = 'block';
+            } else {
+                additionalChartsBlock.style.display = 'none';
+            }
+            
+            // Обновляем выпадающий список годов
+            updateYearFilter(yearLabels);
+            
+            // Фильтруем данные по выбранному году
+            let filteredData = chartData;
+            if (selectedYear !== 'all') {
+                filteredData = filterData(chartData, headers, yearColumns, selectedYear);
+            }
+            
+            // Выбираем данные для диаграмм
+            let dataColumnIndex = 0;
+            if (selectedYear === 'all') {
+                // Используем первый числовой столбец, если не выбран конкретный год
+                if (numericColumns.length > 0) {
+                    dataColumnIndex = numericColumns[0];
+                } else if (yearColumns.length > 0) {
+                    dataColumnIndex = yearColumns[0];
+                }
+            } else {
+                // Находим индекс столбца с выбранным годом
+                const yearIndex = headers.findIndex(header => {
+                    if (!header) return false;
+                    const headerStr = header.toString();
+                    return headerStr === selectedYear;
+                });
+                
+                if (yearIndex !== -1) {
+                    dataColumnIndex = yearIndex;
+                }
+            }
+            
+            // Извлекаем метки и значения из данных
+            const labels = [];
+            const values = [];
+            
+            for (let i = 1; i < filteredData.length; i++) {
+                const row = filteredData[i];
+                if (!Array.isArray(row)) continue;
+                
+                // Получаем название (из текстового столбца)
+                const label = row[labelColumnIndex] !== null && row[labelColumnIndex] !== undefined 
+                    ? row[labelColumnIndex].toString() 
+                    : 'Значение ' + i;
+                
+                // Получаем значение
+                let value = row[dataColumnIndex];
+                if (typeof value !== 'number' || isNaN(value)) {
+                    value = 0;
+                }
+                
+                labels.push(label);
+                values.push(value);
+            }
+            
+            // Генерируем цвета для диаграмм
+            const colors = generateColors(labels.length);
+            
+            // Определяем заголовок для диаграммы
+            const valueLabel = headers[dataColumnIndex] || 'Значение';
+            
+            // Создаем диаграммы
+            createBarChart(labels, values, colors, valueLabel);
+            createPieChart(labels, values, colors, valueLabel);
+            
+            // Создаем линейную диаграмму с данными по годам, только если есть годовые данные
+            if (yearLabels.length > 1) {
+                createLineChart(chartData, headers, labelColumnIndex, yearColumns, yearLabels);
+                
+                // Создаем статистику по годам
+                createYearSummary(chartData, yearColumns, yearLabels);
+            }
+        }
+        
+        // Создание столбчатой диаграммы
+        function createBarChart(labels, values, colors, valueLabel) {
+            const barCtx = document.getElementById('bar-chart').getContext('2d');
+            if (barChart) barChart.destroy();
+            
+            // Сортируем данные по значениям (от большего к меньшему)
+            const combinedData = labels.map((label, index) => ({
+                label: label,
+                value: values[index],
+                color: colors[index]
+            }));
+            
+            combinedData.sort((a, b) => b.value - a.value);
+            
+            // Берем только топ-15 для лучшей читаемости
+            const topData = combinedData.slice(0, 15);
+            
+            // Подготавливаем данные для диаграммы
+            const chartLabels = topData.map(item => item.label);
+            const chartValues = topData.map(item => item.value);
+            const chartColors = topData.map(item => item.color);
+            
+            // Вычисляем общую сумму для процентного отображения
+            const totalSum = values.reduce((sum, value) => sum + value, 0);
+            
+            barChart = new Chart(barCtx, {
+                type: 'bar',
+                data: {
+                    labels: chartLabels,
+                    datasets: [{
+                        label: valueLabel,
+                        data: chartValues,
+                        backgroundColor: chartColors,
+                        borderColor: chartColors.map(color => color.replace('0.8', '1')),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                color: '#000000',
+                                font: {
+                                    weight: 'bold',
+                                    size: 14
+                                },
+                                usePointStyle: true,
+                                padding: 15,
+                                boxWidth: 10,
+                                boxHeight: 10
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                            titleColor: '#ffffff',
+                            bodyColor: '#ffffff',
+                            titleFont: {
+                                weight: 'bold',
+                                size: 16
+                            },
+                            bodyFont: {
+                                weight: 'bold',
+                                size: 14
+                            },
+                            padding: 15,
+                            cornerRadius: 5,
+                            displayColors: true,
+                            callbacks: {
+                                label: function(context) {
+                                    const value = context.raw;
+                                    const percentage = ((value / totalSum) * 100).toFixed(1);
+                                    return `${context.dataset.label}: ${value.toLocaleString('ru-RU')} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)',
+                                lineWidth: 1
+                            },
+                            ticks: {
+                                color: '#000000',
+                                font: {
+                                    weight: 'bold',
+                                    size: 13
+                                },
+                                callback: function(value) {
+                                    if (value >= 1000000) {
+                                        return (value / 1000000).toFixed(1) + ' млн';
+                                    } else if (value >= 1000) {
+                                        return (value / 1000).toFixed(1) + ' тыс';
+                                    }
+                                    return value;
+                                }
+                            }
+                        },
+                        y: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                color: '#000000',
+                                font: {
+                                    weight: 'bold',
+                                    size: 13
+                                },
+                                callback: function(value) {
+                                    const label = this.getLabelForValue(value);
+                                    if (label.length > 20) {
+                                        return label.substring(0, 17) + '...';
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Обновляем заголовок диаграммы с учетом общей суммы
+            document.getElementById('bar-chart-title').textContent = `Столбчатая диаграмма (Всего: ${totalSum.toLocaleString('ru-RU')})`;
+        }
+        
+        // Создание круговой диаграммы
+        function createPieChart(labels, values, colors, valueLabel) {
+            const pieCtx = document.getElementById('pie-chart').getContext('2d');
+            if (pieChart) pieChart.destroy();
+            
+            // Сортируем данные по значениям (от большего к меньшему)
+            const combinedData = labels.map((label, index) => ({
+                label: label,
+                value: values[index],
+                color: colors[index]
+            })).filter(item => item.value > 0);  // Исключаем нулевые значения
+            
+            combinedData.sort((a, b) => b.value - a.value);
+            
+            // Берем только топ-10, остальное объединяем в "Прочие"
+            const topData = combinedData.slice(0, 10);
+            const otherData = combinedData.slice(10);
+            
+            // Готовим данные для диаграммы
+            let chartLabels = topData.map(item => item.label);
+            let chartValues = topData.map(item => item.value);
+            let chartColors = topData.map(item => item.color);
+            
+            // Если есть элементы в "Прочие", добавляем их
+            if (otherData.length > 0) {
+                const otherSum = otherData.reduce((sum, item) => sum + item.value, 0);
+                chartLabels.push('Прочие');
+                chartValues.push(otherSum);
+                chartColors.push('rgba(150, 150, 150, 0.7)');
+            }
+            
+            // Вычисляем общую сумму для процентного отображения
+            const totalSum = values.reduce((sum, value) => sum + value, 0);
+            
+            pieChart = new Chart(pieCtx, {
+                type: 'pie',
+                data: {
+                    labels: chartLabels,
+                    datasets: [{
+                        label: valueLabel,
+                        data: chartValues,
+                        backgroundColor: chartColors,
+                        borderColor: '#ffffff',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                color: '#000000',
+                                font: {
+                                    weight: 'bold',
+                                    size: 13
+                                },
+                                usePointStyle: true,
+                                padding: 15,
+                                boxWidth: 12,
+                                boxHeight: 12,
+                                generateLabels: function(chart) {
+                                    const data = chart.data;
+                                    if (data.labels.length && data.datasets.length) {
+                                        return data.labels.map((label, i) => {
+                                            const dataset = data.datasets[0];
+                                            const value = dataset.data[i];
+                                            const percent = ((value / totalSum) * 100).toFixed(1);
+                                            return {
+                                                text: `${label} (${percent}%)`,
+                                                fillStyle: dataset.backgroundColor[i],
+                                                hidden: isNaN(dataset.data[i]),
+                                                index: i,
+                                                strokeStyle: '#ffffff',
+                                                lineWidth: 2
+                                            };
+                                        });
+                                    }
+                                    return [];
+                                }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                            titleColor: '#ffffff',
+                            bodyColor: '#ffffff',
+                            titleFont: {
+                                weight: 'bold',
+                                size: 16
+                            },
+                            bodyFont: {
+                                weight: 'bold',
+                                size: 14
+                            },
+                            padding: 15,
+                            cornerRadius: 5,
+                            displayColors: true,
+                            callbacks: {
+                                label: function(context) {
+                                    const total = chartValues.reduce((a, b) => a + b, 0);
+                                    const percentage = ((context.raw / total) * 100).toFixed(1);
+                                    return `${context.label}: ${context.raw.toLocaleString('ru-RU')} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Обновляем заголовок диаграммы с учетом общей суммы
+            document.getElementById('pie-chart-title').textContent = `Круговая диаграмма (Всего: ${totalSum.toLocaleString('ru-RU')})`;
+        }
+        
+        // Создание линейной диаграммы для отображения динамики по годам
+        function createLineChart(chartData, headers, labelColumnIndex, yearColumns, yearLabels) {
+            const lineCtx = document.getElementById('line-chart').getContext('2d');
+            if (window.lineChart) window.lineChart.destroy();
+            
+            // Группируем данные по производителям и годам
+            const seriesData = {};
+            
+            chartData.forEach(row => {
+                if (!Array.isArray(row) || row.length <= labelColumnIndex) return;
+                
+                const label = row[labelColumnIndex] !== null && row[labelColumnIndex] !== undefined ? row[labelColumnIndex].toString() : '';
+                if (!label) return;
+                
+                seriesData[label] = seriesData[label] || {};
+                
+                // Заполняем данные по годам
+                yearColumns.forEach((colIndex, i) => {
+                    if (row.length <= colIndex) return;
+                    const year = yearLabels[i];
+                    const value = row[colIndex];
+                    
+                    if (typeof value === 'number' && !isNaN(value)) {
+                        seriesData[label][year] = value;
+                    }
+                });
+            });
+            
+            // Создаем наборы данных для каждой серии
+            const datasets = [];
+            const colors = generateColors(Object.keys(seriesData).length);
+            
+            // Сортируем производителей по общей сумме значений (от большего к меньшему)
+            const sortedLabels = Object.keys(seriesData).sort((a, b) => {
+                const sumA = Object.values(seriesData[a]).reduce((sum, val) => sum + val, 0);
+                const sumB = Object.values(seriesData[b]).reduce((sum, val) => sum + val, 0);
+                return sumB - sumA;
+            });
+            
+            // Берем только топ-10 производителей для лучшей читаемости
+            const topLabels = sortedLabels.slice(0, 8); // Уменьшим до 8 для лучшей читаемости
+            
+            topLabels.forEach((label, index) => {
+                const data = yearLabels.map(year => seriesData[label][year] || 0);
+                
+                datasets.push({
+                    label: label,
+                    data: data,
+                    borderColor: colors[index].replace('0.7', '0.9'),
+                    backgroundColor: colors[index],
+                    fill: false,
+                    tension: 0.1,
+                    pointRadius: 6,
+                    pointHoverRadius: 8,
+                    borderWidth: 3
+                });
+            });
+            
+            // Если есть больше 8 производителей, добавляем "Прочие"
+            if (sortedLabels.length > 8) {
+                const otherLabels = sortedLabels.slice(8);
+                const otherData = yearLabels.map(year => {
+                    return otherLabels.reduce((sum, label) => {
+                        return sum + (seriesData[label][year] || 0);
+                    }, 0);
+                });
+                
+                datasets.push({
+                    label: 'Прочие',
+                    data: otherData,
+                    borderColor: 'rgba(150, 150, 150, 0.9)',
+                    backgroundColor: 'rgba(150, 150, 150, 0.7)',
+                    fill: false,
+                    tension: 0.1,
+                    pointRadius: 6,
+                    pointHoverRadius: 8,
+                    borderWidth: 3,
+                    borderDash: [5, 5] // Пунктирная линия для "Прочие"
+                });
+            }
+            
+            // Собираем общую сумму по годам для отображения в заголовке
+            const yearSums = {};
+            yearLabels.forEach(year => {
+                yearSums[year] = sortedLabels.reduce((sum, label) => {
+                    return sum + (seriesData[label][year] || 0);
+                }, 0);
+            });
+            
+            // Определяем тип диаграммы (line или bar) на основе настроек
+            const lineChartType = 'line'; // Всегда используем линейную диаграмму
+            
+            // Создаем линейную диаграмму
+            window.lineChart = new Chart(lineCtx, {
+                type: lineChartType,
+                data: {
+                    labels: yearLabels,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                color: '#000000',
+                                boxWidth: 15,
+                                padding: 10,
+                                font: {
+                                    weight: 'bold',
+                                    size: 13
+                                },
+                                usePointStyle: true
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const value = context.raw;
+                                    return `${context.dataset.label}: ${value.toLocaleString('ru-RU')}`;
+                                },
+                                footer: function(tooltipItems) {
+                                    const year = tooltipItems[0].label;
+                                    const total = yearSums[year] || 0;
+                                    return `Всего за ${year} год: ${total.toLocaleString('ru-RU')}`;
+                                }
+                            },
+                            backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                            titleColor: '#ffffff',
+                            bodyColor: '#ffffff',
+                            borderWidth: 1,
+                            borderColor: '#555',
+                            padding: 15,
+                            titleFont: {
+                                weight: 'bold',
+                                size: 16
+                            },
+                            bodyFont: {
+                                weight: 'bold',
+                                size: 14
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Динамика данных по годам',
+                            color: '#000000',
+                            font: {
+                                size: 18,
+                                weight: 'bold'
+                            },
+                            padding: 20
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            },
+                            ticks: {
+                                color: '#000000',
+                                font: {
+                                    weight: 'bold',
+                                    size: 13
+                                },
+                                callback: function(value) {
+                                    if (value >= 1000000) {
+                                        return (value / 1000000).toFixed(1) + ' млн';
+                                    } else if (value >= 1000) {
+                                        return (value / 1000).toFixed(1) + ' тыс';
+                                    }
+                                    return value;
+                                }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            },
+                            ticks: {
+                                color: '#000000',
+                                font: {
+                                    weight: 'bold',
+                                    size: 14
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Обновляем заголовок диаграммы с учетом суммы за все годы
+            const totalSum = Object.values(yearSums).reduce((sum, val) => sum + val, 0);
+            document.getElementById('line-chart-title').textContent = `Динамика по годам (Всего: ${totalSum.toLocaleString('ru-RU')})`;
+        }
+        
+        // Функция для генерации случайных цветов
+        function generateColors(count) {
+            const colors = [];
+            const baseColors = [
+                'rgba(220, 20, 60, 0.9)',     // Темно-красный
+                'rgba(0, 100, 255, 0.9)',     // Яркий синий
+                'rgba(255, 180, 0, 0.9)',     // Янтарный
+                'rgba(0, 180, 120, 0.9)',     // Изумрудный
+                'rgba(130, 20, 200, 0.9)',    // Пурпурный
+                'rgba(255, 100, 0, 0.9)',     // Оранжевый
+                'rgba(210, 30, 150, 0.9)',    // Малиновый
+                'rgba(0, 70, 180, 0.9)',      // Темно-синий
+                'rgba(0, 150, 160, 0.9)',     // Бирюзовый
+                'rgba(210, 90, 0, 0.9)',      // Терракотовый
+                'rgba(0, 150, 100, 0.9)',     // Зеленый
+                'rgba(100, 100, 100, 0.9)'    // Серый
+            ];
+            
+            // Используем предопределенные цвета для первых элементов
+            for (let i = 0; i < count; i++) {
+                if (i < baseColors.length) {
+                    colors.push(baseColors[i]);
+                } else {
+                    // Для дополнительных элементов генерируем яркие насыщенные цвета
+                    const hue = (i * 137.5) % 360;
+                    // Высокая насыщенность (80%) и яркость (50%)
+                    colors.push(`hsla(${hue}, 80%, 50%, 0.9)`);
+                }
+            }
+            return colors;
+        }
+        
+        // Добавляем обработчики для кнопок скачивания диаграмм
+        document.querySelectorAll('.chart-download').forEach(button => {
+            button.addEventListener('click', function() {
+                const chartType = this.getAttribute('data-chart');
+                let canvas;
+                
+                if (chartType === 'bar') {
+                    canvas = document.getElementById('bar-chart');
+                } else if (chartType === 'pie') {
+                    canvas = document.getElementById('pie-chart');
+                } else if (chartType === 'line') {
+                    canvas = document.getElementById('line-chart');
+                }
+                
+                if (canvas) {
+                    // Создаем временную ссылку для скачивания
+                    const link = document.createElement('a');
+                    link.download = `диаграмма_${chartType}_${new Date().toISOString().slice(0, 10)}.png`;
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                }
+            });
+        });
+
+        // Функция для создания сводной статистики по годам
+        function createYearSummary(data, yearColumns, yearLabels) {
+            if (!data || !Array.isArray(data) || data.length < 2) {
+                return;
+            }
+            
+            const yearSummaryContainer = document.getElementById('year-summary-container');
+            const yearSummary = document.getElementById('year-summary');
+            
+            // Создаем объект для хранения статистики по годам
+            const yearStats = {};
+            
+            // Инициализируем статистику для каждого года
+            yearColumns.forEach((colIndex, i) => {
+                const year = yearLabels[i];
+                yearStats[year] = {
+                    total: 0,            // Общая сумма
+                    count: 0,            // Количество ненулевых значений
+                    max: 0,              // Максимальное значение
+                    maxName: '',         // Название с максимальным значением
+                    min: Number.MAX_VALUE, // Минимальное значение
+                    minName: ''          // Название с минимальным значением
+                };
+            });
+            
+            // Находим индекс текстового столбца для названий (используем первый доступный)
+            let nameColumnIndex = 0;
+            if (window.chartMetadata && window.chartMetadata.text_columns && window.chartMetadata.text_columns.length > 0) {
+                nameColumnIndex = window.chartMetadata.text_columns[0];
+            }
+            
+            // Обрабатываем данные
+            for (let i = 1; i < data.length; i++) {
+                const row = data[i];
+                if (!Array.isArray(row)) continue;
+                
+                const name = row[nameColumnIndex] !== null && row[nameColumnIndex] !== undefined ? row[nameColumnIndex].toString() : '';
+                
+                yearColumns.forEach((colIndex, j) => {
+                    const year = yearLabels[j];
+                    const value = row[colIndex];
+                    
+                    if (typeof value === 'number' && !isNaN(value)) {
+                        yearStats[year].total += value;
+                        
+                        if (value > 0) {
+                            yearStats[year].count++;
+                        }
+                        
+                        if (value > yearStats[year].max) {
+                            yearStats[year].max = value;
+                            yearStats[year].maxName = name;
+                        }
+                        
+                        if (value > 0 && value < yearStats[year].min) {
+                            yearStats[year].min = value;
+                            yearStats[year].minName = name;
+                        }
+                    }
+                });
+            }
+            
+            // Создаем HTML для отображения статистики
+            let summaryHTML = '';
+            
+            yearLabels.forEach(year => {
+                const stats = yearStats[year];
+                
+                // Пропускаем года с нулевыми значениями
+                if (stats.total === 0) return;
+                
+                // Форматируем значения
+                const formattedTotal = stats.total.toLocaleString('ru-RU');
+                const formattedMax = stats.max.toLocaleString('ru-RU');
+                const formattedMin = stats.min === Number.MAX_VALUE ? '0' : stats.min.toLocaleString('ru-RU');
+                
+                summaryHTML += `
+                <div class="col-md-4 mb-2">
+                    <div class="card">
+                        <div class="card-header py-2 bg-light">
+                            <strong>${year}</strong>
+                        </div>
+                        <div class="card-body py-2">
+                            <p class="mb-1"><strong>Всего:</strong> ${formattedTotal}</p>
+                            <p class="mb-1"><strong>Производителей:</strong> ${stats.count}</p>
+                            <p class="mb-1"><strong>Максимум:</strong> ${formattedMax} (${stats.maxName})</p>
+                            <p class="mb-0"><strong>Минимум:</strong> ${formattedMin} ${stats.min !== Number.MAX_VALUE ? `(${stats.minName})` : ''}</p>
+                        </div>
+                    </div>
+                </div>`;
+            });
+            
+            // Добавляем статистику на страницу
+            yearSummary.innerHTML = summaryHTML;
+            yearSummaryContainer.style.display = summaryHTML ? 'block' : 'none';
+        }
+    });
+</script>
+{% endblock %}

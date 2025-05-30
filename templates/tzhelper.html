@@ -1,0 +1,1171 @@
+{% extends "base.html" %}
+
+{% block title %}ТЗhelper{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<style>
+    /* Общие стили для ТЗhelper */
+    .tzhelper-container {
+        height: calc(100vh - 90px);
+        overflow: hidden;
+    }
+    
+    /* Стили для боковой панели */
+    .sidebar {
+        height: 100%;
+        border-right: 1px solid #e0e0e0;
+        padding: 15px;
+        background-color: #f8f9fa;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .sidebar-header {
+        padding-bottom: 15px;
+        border-bottom: 1px solid #e0e0e0;
+    }
+    
+    .chat-list-container {
+        flex-grow: 1;
+        overflow-y: auto;
+        margin-top: 15px;
+    }
+    
+    .chat-item {
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 8px;
+        background-color: #fff;
+        border: 1px solid #e0e0e0;
+        position: relative;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .chat-item:hover {
+        background-color: #f0f7ff;
+        border-color: #cce5ff;
+    }
+    
+    .chat-item.active {
+        background-color: #e3f2fd;
+        border-color: #90caf9;
+    }
+    
+    .chat-title {
+        font-weight: 500;
+        margin-bottom: 5px;
+        padding-right: 60px;
+    }
+    
+    .chat-meta {
+        display: flex;
+        align-items: center;
+        font-size: 0.8rem;
+        color: #666;
+    }
+    
+    .chat-date {
+        margin-right: 10px;
+    }
+    
+    .chat-status.completed {
+        color: #28a745;
+    }
+    
+    .chat-actions {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        display: none;
+    }
+    
+    .chat-item:hover .chat-actions {
+        display: block;
+    }
+    
+    .chat-actions .btn-link {
+        color: #6c757d;
+        padding: 2px 5px;
+    }
+    
+    .chat-actions .btn-link:hover {
+        color: #0d6efd;
+    }
+    
+    .no-chats-message {
+        padding: 20px;
+        text-align: center;
+    }
+    
+    /* Стили для основной панели */
+    .main-panel {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+    }
+    
+    .welcome-screen {
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 20px;
+    }
+    
+    .welcome-content {
+        max-width: 600px;
+    }
+    
+    .welcome-icon {
+        width: 80px;
+        height: 80px;
+        object-fit: contain;
+    }
+    
+    .chat-panel {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .chat-header {
+        padding: 15px;
+        border-bottom: 1px solid #e0e0e0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .chat-title-container {
+        display: flex;
+        align-items: center;
+    }
+    
+    .messages-container {
+        flex-grow: 1;
+        overflow-y: auto;
+        padding: 15px;
+        background-color: #f8f9fa;
+    }
+    
+    .message {
+        margin-bottom: 15px;
+        display: flex;
+    }
+    
+    .message-user {
+        justify-content: flex-end;
+    }
+    
+    .message-assistant {
+        justify-content: flex-start;
+    }
+    
+    .message-content {
+        max-width: 80%;
+        padding: 10px 15px;
+        border-radius: 10px;
+        position: relative;
+    }
+    
+    .message-user .message-content {
+        background-color: #e3f2fd;
+        border: 1px solid #90caf9;
+    }
+    
+    .message-assistant .message-content {
+        background-color: #ffffff;
+        border: 1px solid #e0e0e0;
+    }
+    
+    .message-time {
+        font-size: 0.7rem;
+        color: #888;
+        margin-top: 5px;
+        text-align: right;
+    }
+    
+    .message-input-container {
+        padding: 15px;
+        border-top: 1px solid #e0e0e0;
+    }
+    
+    .message-input-container textarea {
+        resize: none;
+    }
+    
+    /* Стили для панели результата ТЗ */
+    .tz-result-panel {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .tz-result-header {
+        padding: 15px;
+        border-bottom: 1px solid #e0e0e0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .tz-content {
+        flex-grow: 1;
+        overflow-y: auto;
+        padding: 20px;
+        background-color: #ffffff;
+        white-space: pre-line;
+    }
+    
+    /* Адаптивные стили */
+    @media (max-width: 768px) {
+        .tzhelper-container {
+            height: auto;
+        }
+        
+        .sidebar, .main-panel {
+            height: auto;
+        }
+        
+        .messages-container, .tz-content {
+            max-height: 60vh;
+        }
+        
+        .chat-header, .tz-result-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .chat-actions, .tz-actions {
+            margin-top: 10px;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="tzhelper-container">
+    <div class="row">
+        <!-- Боковая панель с историей чатов -->
+        <div class="col-md-3 sidebar">
+            <div class="sidebar-header">
+                <h4 class="mb-0">ТЗhelper</h4>
+                <p class="text-muted small mb-3">Сервис для создания технических заданий</p>
+                <button id="newChatBtn" class="btn btn-primary w-100 mb-3">
+                    <i class="fas fa-plus-circle me-2"></i> Новое ТЗ
+                </button>
+            </div>
+            
+            <!-- Список чатов -->
+            <div class="chat-list-container">
+                <div class="chat-list-header d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="mb-0">История</h6>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-link text-muted" type="button" id="chatOptionsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="chatOptionsDropdown">
+                            <li><a class="dropdown-item" href="#" id="sortByNewest">Сначала новые</a></li>
+                            <li><a class="dropdown-item" href="#" id="sortByOldest">Сначала старые</a></li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="chat-list" id="chatList">
+                    {% if chats %}
+                        {% for chat in chats %}
+                            <div class="chat-item" data-chat-id="{{ chat.id }}">
+                                <div class="chat-title">{{ chat.title }}</div>
+                                <div class="chat-meta">
+                                    <span class="chat-date">{{ chat.updated_at.strftime('%d.%m.%Y') }}</span>
+                                    {% if chat.content %}
+                                        <span class="chat-status completed"><i class="fas fa-check-circle"></i></span>
+                                    {% endif %}
+                                </div>
+                                <div class="chat-actions">
+                                    <button class="btn btn-sm btn-link edit-chat-btn" title="Переименовать">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-link delete-chat-btn" title="Удалить">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="no-chats-message">
+                            <p class="text-muted text-center">У вас пока нет чатов.<br>Создайте новый, нажав кнопку выше.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Основная панель чата -->
+        <div class="col-md-9 main-panel">
+            <div id="welcomeScreen" class="welcome-screen">
+                <div class="welcome-content">
+                    <img src="{{ url_for('static', filename='img/avatar.png') }}" class="welcome-icon mb-4">
+                    <h2>Добро пожаловать в ТЗhelper</h2>
+                    <p class="text-muted mb-4">Этот инструмент поможет вам создать подробное и качественное техническое задание для вашего проекта. Просто опишите ваши требования, а искусственный интеллект задаст уточняющие вопросы и сформирует структурированное ТЗ.</p>
+                    <button id="welcomeNewChatBtn" class="btn btn-primary">
+                        <i class="fas fa-plus-circle me-2"></i> Создать новое ТЗ
+                    </button>
+                </div>
+            </div>
+
+            <div id="chatPanel" class="chat-panel d-none">
+                <div class="chat-header">
+                    <div class="chat-title-container">
+                        <h5 id="activeChatTitle">Название ТЗ</h5>
+                        <button id="editTitleBtn" class="btn btn-sm btn-link">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </div>
+                    <div class="chat-actions">
+                        <button id="generateTzBtn" class="btn btn-success">
+                            <i class="fas fa-file-alt me-2"></i> Сформировать ТЗ
+                        </button>
+                        <button id="exportTzBtn" class="btn btn-primary ms-2" disabled>
+                            <i class="fas fa-download me-2"></i> Экспорт в Word
+                        </button>
+                    </div>
+                </div>
+
+                <div class="messages-container" id="messagesContainer">
+                    <!-- Сообщения будут добавляться здесь динамически -->
+                </div>
+
+                <div class="message-input-container">
+                    <form id="messageForm">
+                        <div class="input-group">
+                            <textarea id="messageInput" class="form-control" placeholder="Опишите ваш проект или задайте вопрос..." rows="2"></textarea>
+                            <button type="submit" id="sendMessageBtn" class="btn btn-primary">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div id="tzResultPanel" class="tz-result-panel d-none">
+                <div class="tz-result-header">
+                    <h5>Сформированное техническое задание</h5>
+                    <div class="tz-actions">
+                        <button id="backToChatBtn" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i> Вернуться к чату
+                        </button>
+                        <button id="copyTzBtn" class="btn btn-outline-primary ms-2">
+                            <i class="fas fa-copy me-2"></i> Копировать
+                        </button>
+                        <button id="downloadTzBtn" class="btn btn-primary ms-2">
+                            <i class="fas fa-download me-2"></i> Скачать Word
+                        </button>
+                    </div>
+                </div>
+                <div class="tz-content" id="tzContent">
+                    <!-- Сформированное ТЗ будет отображаться здесь -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальные окна -->
+<!-- Модальное окно для создания нового чата -->
+<div class="modal fade" id="newChatModal" tabindex="-1" aria-labelledby="newChatModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="newChatModalLabel">Новое техническое задание</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="newChatTitle" class="form-label">Название ТЗ</label>
+                    <input type="text" class="form-control" id="newChatTitle" placeholder="Например: Разработка мобильного приложения">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" id="createChatBtn">Создать</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для редактирования названия чата -->
+<div class="modal fade" id="editChatModal" tabindex="-1" aria-labelledby="editChatModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editChatModalLabel">Изменить название</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="editChatTitle" class="form-label">Название ТЗ</label>
+                    <input type="text" class="form-control" id="editChatTitle">
+                    <input type="hidden" id="editChatId">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" id="saveChatTitleBtn">Сохранить</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для подтверждения удаления чата -->
+<div class="modal fade" id="deleteChatModal" tabindex="-1" aria-labelledby="deleteChatModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteChatModalLabel">Подтверждение удаления</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Вы уверены, что хотите удалить этот чат? Это действие нельзя отменить.</p>
+                <input type="hidden" id="deleteChatId">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Удалить</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно загрузки -->
+<div class="modal fade" id="loadingModal" tabindex="-1" aria-labelledby="loadingModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center p-4">
+                <div class="spinner-border text-primary mb-3" role="status">
+                    <span class="visually-hidden">Загрузка...</span>
+                </div>
+                <h5 id="loadingModalText">Обработка запроса...</h5>
+                <p class="text-muted" id="loadingModalSubtext">Пожалуйста, подождите</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Элементы интерфейса
+        const newChatBtn = document.getElementById('newChatBtn');
+        const welcomeNewChatBtn = document.getElementById('welcomeNewChatBtn');
+        const newChatModal = new bootstrap.Modal(document.getElementById('newChatModal'));
+        const editChatModal = new bootstrap.Modal(document.getElementById('editChatModal'));
+        const deleteChatModal = new bootstrap.Modal(document.getElementById('deleteChatModal'));
+        const loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
+        
+        const welcomeScreen = document.getElementById('welcomeScreen');
+        const chatPanel = document.getElementById('chatPanel');
+        const tzResultPanel = document.getElementById('tzResultPanel');
+        
+        const chatList = document.getElementById('chatList');
+        const messagesContainer = document.getElementById('messagesContainer');
+        const messageForm = document.getElementById('messageForm');
+        const messageInput = document.getElementById('messageInput');
+        
+        const activeChatTitle = document.getElementById('activeChatTitle');
+        const editTitleBtn = document.getElementById('editTitleBtn');
+        const generateTzBtn = document.getElementById('generateTzBtn');
+        const exportTzBtn = document.getElementById('exportTzBtn');
+        
+        const createChatBtn = document.getElementById('createChatBtn');
+        const editChatTitle = document.getElementById('editChatTitle');
+        const editChatId = document.getElementById('editChatId');
+        const saveChatTitleBtn = document.getElementById('saveChatTitleBtn');
+        
+        const deleteChatId = document.getElementById('deleteChatId');
+        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+        
+        const tzContent = document.getElementById('tzContent');
+        const backToChatBtn = document.getElementById('backToChatBtn');
+        const copyTzBtn = document.getElementById('copyTzBtn');
+        const downloadTzBtn = document.getElementById('downloadTzBtn');
+        
+        // Глобальные переменные для хранения состояния
+        let activeChat = null;
+        
+        // Инициализация обработчиков событий
+        newChatBtn.addEventListener('click', () => newChatModal.show());
+        welcomeNewChatBtn.addEventListener('click', () => newChatModal.show());
+        
+        createChatBtn.addEventListener('click', createNewChat);
+        saveChatTitleBtn.addEventListener('click', updateChatTitle);
+        confirmDeleteBtn.addEventListener('click', deleteChat);
+        
+        messageForm.addEventListener('submit', sendMessage);
+        editTitleBtn.addEventListener('click', () => {
+            editChatTitle.value = activeChatTitle.textContent;
+            editChatId.value = activeChat;
+            editChatModal.show();
+        });
+        
+        generateTzBtn.addEventListener('click', generateTz);
+        exportTzBtn.addEventListener('click', exportTz);
+        
+        backToChatBtn.addEventListener('click', () => {
+            tzResultPanel.classList.add('d-none');
+            chatPanel.classList.remove('d-none');
+        });
+        
+        copyTzBtn.addEventListener('click', () => {
+            const content = tzContent.textContent;
+            navigator.clipboard.writeText(content)
+                .then(() => showToast('ТЗ скопировано в буфер обмена', 'success'))
+                .catch(err => showToast('Не удалось скопировать ТЗ: ' + err, 'error'));
+        });
+        
+        downloadTzBtn.addEventListener('click', () => {
+            window.location.href = `/api/tzhelper/chat/${activeChat}/export`;
+        });
+        
+        // Загрузка списка чатов при открытии страницы
+        loadChatList();
+        
+        // Делегирование событий для элементов списка чатов
+        chatList.addEventListener('click', handleChatListClick);
+        
+        // Функции для работы с API
+        async function loadChatList() {
+            try {
+                const response = await fetch('/api/tzhelper/chats');
+                const data = await response.json();
+                
+                if (data.chats && data.chats.length > 0) {
+                    renderChatList(data.chats);
+                }
+            } catch (error) {
+                console.error('Ошибка при загрузке списка чатов:', error);
+                showToast('Не удалось загрузить список чатов', 'error');
+            }
+        }
+        
+        async function createNewChat() {
+            const title = document.getElementById('newChatTitle').value.trim() || 'Новое ТЗ';
+            
+            try {
+                showLoadingModal('Создание нового чата...');
+                
+                const response = await fetch('/api/tzhelper/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ title })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    newChatModal.hide();
+                    document.getElementById('newChatTitle').value = '';
+                    
+                    // Добавляем новый чат в список и активируем его
+                    const chatItem = createChatItem(data);
+                    if (chatList.querySelector('.no-chats-message')) {
+                        chatList.innerHTML = '';
+                    }
+                    chatList.insertAdjacentHTML('afterbegin', chatItem);
+                    
+                    // Открываем чат
+                    openChat(data.id);
+                } else {
+                    showToast(data.error || 'Не удалось создать чат', 'error');
+                }
+            } catch (error) {
+                console.error('Ошибка при создании чата:', error);
+                showToast('Не удалось создать чат', 'error');
+            } finally {
+                hideLoadingModal();
+            }
+        }
+        
+        async function openChat(chatId) {
+            try {
+                showLoadingModal('Загрузка чата...');
+                
+                const response = await fetch(`/api/tzhelper/chat/${chatId}`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Обновляем активный чат
+                    activeChat = chatId;
+                    
+                    // Выделяем активный чат в списке
+                    const chatItems = chatList.querySelectorAll('.chat-item');
+                    chatItems.forEach(item => item.classList.remove('active'));
+                    const currentItem = chatList.querySelector(`[data-chat-id="${chatId}"]`);
+                    if (currentItem) currentItem.classList.add('active');
+                    
+                    // Обновляем заголовок
+                    activeChatTitle.textContent = data.title;
+                    
+                    // Отображаем сообщения
+                    renderMessages(data.messages);
+                    
+                    // Показываем панель чата
+                    welcomeScreen.classList.add('d-none');
+                    chatPanel.classList.remove('d-none');
+                    tzResultPanel.classList.add('d-none');
+                    
+                    // Если есть готовое ТЗ, активируем кнопку экспорта
+                    exportTzBtn.disabled = !data.content;
+                    
+                    // Прокручиваем к последнему сообщению
+                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                } else {
+                    showToast(data.error || 'Не удалось загрузить чат', 'error');
+                }
+            } catch (error) {
+                console.error('Ошибка при загрузке чата:', error);
+                showToast('Не удалось загрузить чат', 'error');
+            } finally {
+                hideLoadingModal();
+            }
+        }
+        
+        async function sendMessage(event) {
+            event.preventDefault();
+            
+            const message = messageInput.value.trim();
+            if (!message || !activeChat) return;
+            
+            messageInput.disabled = true;
+            document.getElementById('sendMessageBtn').disabled = true;
+            
+            // Добавляем модальное окно загрузки
+            showLoadingModal('Отправка сообщения...');
+            
+            // Создаем уникальный идентификатор для временного сообщения
+            const tempId = 'temp_' + Date.now();
+            
+            try {
+                // Добавляем временное сообщение пользователя
+                addMessage({
+                    id: tempId,
+                    role: 'user',
+                    content: message,
+                    timestamp: new Date().toISOString(),
+                    isTemp: true
+                });
+                
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                messageInput.value = '';
+                
+                // Отправляем запрос к API с таймаутом
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 секунд таймаут (уменьшено с 60)
+                
+                const response = await fetch(`/api/tzhelper/chat/${activeChat}/message`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ content: message }),
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                
+                // Обрабатываем ответ
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // Удаляем временное сообщение пользователя
+                    const tempMessage = messagesContainer.querySelector(`[data-message-id="${tempId}"]`);
+                    if (tempMessage) tempMessage.remove();
+                    
+                    // Добавляем реальные сообщения
+                    addMessage(data.user_message);
+                    addMessage(data.assistant_message);
+                } else {
+                    // Пытаемся получить JSON с ошибкой
+                    let errorText = "Не удалось обработать запрос";
+                    try {
+                        const errorData = await response.json();
+                        errorText = errorData.error || errorText;
+                    } catch (e) {
+                        errorText += ". Ответ сервера: " + response.status;
+                    }
+                    
+                    // Удаляем временное сообщение пользователя
+                    const tempMessage = messagesContainer.querySelector(`[data-message-id="${tempId}"]`);
+                    if (tempMessage) tempMessage.remove();
+                    
+                    // Добавляем реальное сообщение пользователя
+                    addMessage({
+                        id: 'user_' + Date.now(),
+                        role: 'user',
+                        content: message,
+                        timestamp: new Date().toISOString()
+                    });
+                    
+                    // Добавляем сообщение об ошибке от ассистента
+                    addMessage({
+                        id: 'error_' + Date.now(),
+                        role: 'assistant',
+                        content: "Произошла ошибка: " + errorText,
+                        timestamp: new Date().toISOString()
+                    });
+                    
+                    showToast(errorText, 'error');
+                }
+            } catch (error) {
+                console.error('Ошибка при отправке сообщения:', error);
+                
+                // Удаляем временное сообщение пользователя
+                const tempMessage = messagesContainer.querySelector(`[data-message-id="${tempId}"]`);
+                if (tempMessage) tempMessage.remove();
+                
+                // Добавляем реальное сообщение пользователя
+                addMessage({
+                    id: 'user_' + Date.now(),
+                    role: 'user',
+                    content: message,
+                    timestamp: new Date().toISOString()
+                });
+                
+                // Добавляем сообщение об ошибке от ассистента
+                let errorMessage = 'Произошла ошибка при обработке запроса.';
+                if (error.name === 'AbortError') {
+                    errorMessage = 'Запрос был отменен из-за превышения времени ожидания (таймаут). Используется демо-режим.';
+                    
+                    // Добавляем демо-ответ вместо ошибки при таймауте
+                    addMessage({
+                        id: 'demo_' + Date.now(),
+                        role: 'assistant',
+                        content: "Это демонстрационный ответ, так как запрос к API занял слишком много времени. В режиме демонстрации я помогу вам составить ТЗ, но для полноценной работы нужно настроить API.\n\nКакие основные требования у вас есть к проекту?",
+                        timestamp: new Date().toISOString()
+                    });
+                } else {
+                    errorMessage += ' ' + error.message;
+                    
+                    // Добавляем сообщение об ошибке
+                    addMessage({
+                        id: 'error_' + Date.now(),
+                        role: 'assistant',
+                        content: errorMessage,
+                        timestamp: new Date().toISOString()
+                    });
+                }
+                
+                showToast(errorMessage, 'error');
+            } finally {
+                hideLoadingModal();
+                messageInput.disabled = false;
+                document.getElementById('sendMessageBtn').disabled = false;
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
+        }
+        
+        async function updateChatTitle() {
+            const chatId = editChatId.value;
+            const title = editChatTitle.value.trim();
+            
+            if (!chatId || !title) return;
+            
+            try {
+                const response = await fetch(`/api/tzhelper/chat/${chatId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ title })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Обновляем заголовок в интерфейсе
+                    if (activeChat == chatId) {
+                        activeChatTitle.textContent = title;
+                    }
+                    
+                    // Обновляем заголовок в списке чатов
+                    const chatItem = chatList.querySelector(`[data-chat-id="${chatId}"]`);
+                    if (chatItem) {
+                        chatItem.querySelector('.chat-title').textContent = title;
+                    }
+                    
+                    editChatModal.hide();
+                } else {
+                    showToast(data.error || 'Не удалось обновить название', 'error');
+                }
+            } catch (error) {
+                console.error('Ошибка при обновлении названия:', error);
+                showToast('Не удалось обновить название', 'error');
+            }
+        }
+        
+        async function deleteChat() {
+            const chatId = deleteChatId.value;
+            if (!chatId) return;
+            
+            try {
+                showLoadingModal('Удаление чата...');
+                
+                const response = await fetch(`/api/tzhelper/chat/${chatId}`, {
+                    method: 'DELETE'
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Удаляем чат из списка
+                    const chatItem = chatList.querySelector(`[data-chat-id="${chatId}"]`);
+                    if (chatItem) chatItem.remove();
+                    
+                    // Если был активен удаленный чат, показываем приветственный экран
+                    if (activeChat == chatId) {
+                        activeChat = null;
+                        welcomeScreen.classList.remove('d-none');
+                        chatPanel.classList.add('d-none');
+                        tzResultPanel.classList.add('d-none');
+                    }
+                    
+                    // Если не осталось чатов, показываем сообщение
+                    if (chatList.children.length === 0) {
+                        chatList.innerHTML = `
+                            <div class="no-chats-message">
+                                <p class="text-muted text-center">У вас пока нет чатов.<br>Создайте новый, нажав кнопку выше.</p>
+                            </div>
+                        `;
+                    }
+                    
+                    deleteChatModal.hide();
+                } else {
+                    showToast(data.error || 'Не удалось удалить чат', 'error');
+                }
+            } catch (error) {
+                console.error('Ошибка при удалении чата:', error);
+                showToast('Не удалось удалить чат', 'error');
+            } finally {
+                hideLoadingModal();
+            }
+        }
+        
+        async function generateTz() {
+            if (!activeChat) return;
+            
+            try {
+                showLoadingModal('Генерация технического задания...', 'Это может занять некоторое время');
+                
+                // Добавляем таймаут для запроса
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 40000); // 40 секунд таймаут
+                
+                const response = await fetch(`/api/tzhelper/chat/${activeChat}/generate-tz`, {
+                    method: 'POST',
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // Добавляем сообщение с ТЗ
+                    addMessage(data.message);
+                    
+                    // Показываем панель с результатом
+                    tzContent.textContent = data.tz_content;
+                    chatPanel.classList.add('d-none');
+                    tzResultPanel.classList.remove('d-none');
+                    
+                    // Активируем кнопку экспорта
+                    exportTzBtn.disabled = false;
+                    
+                    // Добавляем индикатор заполненного ТЗ в списке чатов
+                    const chatItem = chatList.querySelector(`[data-chat-id="${activeChat}"]`);
+                    if (chatItem && !chatItem.querySelector('.chat-status.completed')) {
+                        const chatMeta = chatItem.querySelector('.chat-meta');
+                        chatMeta.insertAdjacentHTML('beforeend', '<span class="chat-status completed"><i class="fas fa-check-circle"></i></span>');
+                    }
+                } else {
+                    // Пытаемся получить JSON с ошибкой
+                    let errorText = "Не удалось сгенерировать ТЗ";
+                    try {
+                        const errorData = await response.json();
+                        errorText = errorData.error || errorText;
+                    } catch (e) {
+                        errorText += ". Ответ сервера: " + response.status;
+                    }
+                    
+                    showToast(errorText, 'error');
+                    
+                    // Добавляем сообщение об ошибке в чат
+                    addMessage({
+                        id: 'error_' + Date.now(),
+                        role: 'assistant',
+                        content: "Произошла ошибка при генерации ТЗ: " + errorText,
+                        timestamp: new Date().toISOString()
+                    });
+                }
+            } catch (error) {
+                console.error('Ошибка при генерации ТЗ:', error);
+                
+                // Проверяем, не прервался ли запрос из-за таймаута
+                if (error.name === 'AbortError') {
+                    const timeoutMsg = 'Генерация ТЗ занимает слишком много времени. Используется демонстрационный режим.';
+                    showToast(timeoutMsg, 'warning');
+                    
+                    // Добавляем демо-ответ вместо ошибки при таймауте
+                    const demoTz = generateDemoTz();
+                    
+                    // Добавляем демо-ответ в чат
+                    addMessage({
+                        id: 'demo_' + Date.now(),
+                        role: 'assistant',
+                        content: "Время ожидания превышено. Вот примерная структура ТЗ на основе нашего обсуждения:",
+                        timestamp: new Date().toISOString()
+                    });
+                    
+                    // Показываем панель с результатом
+                    tzContent.textContent = demoTz;
+                    chatPanel.classList.add('d-none');
+                    tzResultPanel.classList.remove('d-none');
+                    
+                    // Активируем кнопку экспорта
+                    exportTzBtn.disabled = false;
+                } else {
+                    showToast('Не удалось сгенерировать ТЗ: ' + error.message, 'error');
+                    
+                    // Добавляем сообщение об ошибке в чат
+                    addMessage({
+                        id: 'error_' + Date.now(),
+                        role: 'assistant',
+                        content: "Произошла ошибка при генерации ТЗ: " + error.message,
+                        timestamp: new Date().toISOString()
+                    });
+                }
+            } finally {
+                hideLoadingModal();
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
+        }
+        
+        // Функция для генерации демо-версии ТЗ
+        function generateDemoTz() {
+            return `# Техническое задание
+
+## 1. Общее описание проекта
+- Название проекта: [Название проекта]
+- Цели и задачи: [Краткое описание целей]
+- Целевая аудитория: [Описание целевой аудитории]
+
+## 2. Функциональные требования
+- Основной функционал
+  - [Функция 1]
+  - [Функция 2]
+  - [Функция 3]
+- Дополнительные возможности
+  - [Дополнительная функция 1]
+  - [Дополнительная функция 2]
+
+## 3. Технические требования
+- Платформа: [Web/Mobile/Desktop]
+- Технологический стек: [Список технологий]
+- Требования к производительности: [Описание требований]
+
+## 4. Интерфейс и пользовательский опыт
+- Общая концепция дизайна: [Описание концепции]
+- Структура экранов/страниц: [Описание структуры]
+
+## 5. Сроки и этапы разработки
+- Начало проекта: [Дата]
+- Окончание проекта: [Дата]
+- Основные вехи:
+  - [Веха 1]: [Дата]
+  - [Веха 2]: [Дата]
+
+## 6. Бюджет
+- Общая стоимость: [Сумма]
+- График платежей: [Описание графика платежей]
+
+---
+*Примечание: Это демонстрационное ТЗ создано автоматически. Для получения полноценного ТЗ требуется настройка API.*`;
+        }
+        
+        async function exportTz() {
+            if (!activeChat) return;
+            window.location.href = `/api/tzhelper/chat/${activeChat}/export`;
+        }
+        
+        // Вспомогательные функции для работы с UI
+        function handleChatListClick(event) {
+            const chatItem = event.target.closest('.chat-item');
+            if (!chatItem) return;
+            
+            const chatId = chatItem.dataset.chatId;
+            
+            // Проверяем, был ли клик по кнопке редактирования или удаления
+            if (event.target.closest('.edit-chat-btn')) {
+                editChatTitle.value = chatItem.querySelector('.chat-title').textContent;
+                editChatId.value = chatId;
+                editChatModal.show();
+                return;
+            }
+            
+            if (event.target.closest('.delete-chat-btn')) {
+                deleteChatId.value = chatId;
+                deleteChatModal.show();
+                return;
+            }
+            
+            // Иначе открываем чат
+            openChat(chatId);
+        }
+        
+        function renderChatList(chats) {
+            chatList.innerHTML = '';
+            
+            if (chats.length === 0) {
+                chatList.innerHTML = `
+                    <div class="no-chats-message">
+                        <p class="text-muted text-center">У вас пока нет чатов.<br>Создайте новый, нажав кнопку выше.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const chatItems = chats.map(chat => createChatItem(chat)).join('');
+            chatList.innerHTML = chatItems;
+        }
+        
+        function createChatItem(chat) {
+            return `
+                <div class="chat-item" data-chat-id="${chat.id}">
+                    <div class="chat-title">${escapeHtml(chat.title)}</div>
+                    <div class="chat-meta">
+                        <span class="chat-date">${chat.created_at}</span>
+                        ${chat.has_content ? '<span class="chat-status completed"><i class="fas fa-check-circle"></i></span>' : ''}
+                    </div>
+                    <div class="chat-actions">
+                        <button class="btn btn-sm btn-link edit-chat-btn" title="Переименовать">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-link delete-chat-btn" title="Удалить">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function renderMessages(messages) {
+            messagesContainer.innerHTML = '';
+            messages.forEach(message => addMessage(message));
+        }
+        
+        function addMessage(message) {
+            const timestamp = new Date(message.timestamp).toLocaleString();
+            const messageId = message.isTemp ? `temp_${Date.now()}` : message.id;
+            
+            const messageHtml = `
+                <div class="message message-${message.role}" data-message-id="${messageId}">
+                    <div class="message-content">
+                        <div class="message-text">${formatMessageContent(message.content)}</div>
+                        <div class="message-time">${timestamp}</div>
+                    </div>
+                </div>
+            `;
+            
+            messagesContainer.insertAdjacentHTML('beforeend', messageHtml);
+        }
+        
+        function formatMessageContent(content) {
+            // Заменяем переносы строк на <br>
+            let formatted = content.replace(/\n/g, '<br>');
+            
+            // Форматируем списки
+            formatted = formatted.replace(/(\d+\.\s.*?)(?=<br>|$)/g, '<li>$1</li>');
+            formatted = formatted.replace(/(\*\s.*?)(?=<br>|$)/g, '<li>$1</li>');
+            formatted = formatted.replace(/(-\s.*?)(?=<br>|$)/g, '<li>$1</li>');
+            
+            // Заменяем несколько последовательных <li> на <ul> или <ol>
+            if (formatted.includes('<li>')) {
+                const hasNumberedList = formatted.match(/\d+\.\s/);
+                formatted = formatted.replace(/(<li>.*?<\/li>)+/g, function(match) {
+                    if (hasNumberedList) {
+                        return `<ol>${match}</ol>`;
+                    } else {
+                        return `<ul>${match}</ul>`;
+                    }
+                });
+            }
+            
+            return formatted;
+        }
+        
+        function showLoadingModal(text, subtext = 'Пожалуйста, подождите') {
+            document.getElementById('loadingModalText').textContent = text;
+            document.getElementById('loadingModalSubtext').textContent = subtext;
+            loadingModal.show();
+        }
+        
+        function hideLoadingModal() {
+            loadingModal.hide();
+        }
+        
+        function showToast(message, type = 'info') {
+            // Используем bootstrap toast или создаем свой простой вариант
+            const toastContainer = document.getElementById('toast-container') || createToastContainer();
+            
+            const toastId = 'toast-' + Date.now();
+            const toastHtml = `
+                <div class="toast" id="${toastId}" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="toast-header bg-${type === 'error' ? 'danger' : type === 'success' ? 'success' : 'primary'} text-white">
+                        <strong class="me-auto">Уведомление</strong>
+                        <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                    <div class="toast-body">
+                        ${message}
+                    </div>
+                </div>
+            `;
+            
+            toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+            const toastElement = document.getElementById(toastId);
+            const toast = new bootstrap.Toast(toastElement, { delay: 5000 });
+            toast.show();
+            
+            // Автоматически удаляем элемент после скрытия
+            toastElement.addEventListener('hidden.bs.toast', () => {
+                toastElement.remove();
+            });
+        }
+        
+        function createToastContainer() {
+            const container = document.createElement('div');
+            container.id = 'toast-container';
+            container.className = 'toast-container position-fixed top-0 end-0 p-3';
+            container.style.zIndex = '1080';
+            document.body.appendChild(container);
+            return container;
+        }
+        
+        function escapeHtml(html) {
+            const div = document.createElement('div');
+            div.textContent = html;
+            return div.innerHTML;
+        }
+    });
+</script>
+{% endblock %} 

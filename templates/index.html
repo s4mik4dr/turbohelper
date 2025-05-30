@@ -1,0 +1,302 @@
+{% extends "base.html" %}
+
+{% block title %}Главная{% endblock %}
+
+{% block additional_head %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&display=swap" rel="stylesheet">
+<style>
+    .welcome-title {
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 700;
+        font-size: 3.5rem;
+        color: var(--bs-primary);
+        margin-bottom: 1.5rem;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        position: relative;
+        display: inline-block;
+        padding-bottom: 0.5rem;
+        z-index: 2;
+    }
+    
+    .welcome-title::after {
+        content: '';
+        position: absolute;
+        width: 80%;
+        height: 4px;
+        background: linear-gradient(90deg, var(--bs-primary), transparent);
+        bottom: 0;
+        left: 10%;
+        border-radius: 2px;
+    }
+    
+    @keyframes titleFadeIn {
+        0% { opacity: 0; transform: translateY(-20px); }
+        100% { opacity: 1; transform: translateY(0); }
+    }
+    
+    .welcome-title {
+        animation: titleFadeIn 1s ease-out forwards;
+    }
+    
+    .welcome-section {
+        margin-top: 2rem;
+        margin-bottom: 3rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .blob-shape {
+        position: absolute;
+        width: 300px;
+        height: 300px;
+        background-color: rgba(var(--bs-primary-rgb), 0.1);
+        border-radius: 42% 58% 70% 30% / 45% 45% 55% 55%;
+        top: -100px;
+        right: -50px;
+        z-index: 1;
+        animation: blob-movement 15s linear infinite alternate;
+    }
+    
+    .blob-shape:nth-child(2) {
+        width: 200px;
+        height: 200px;
+        background-color: rgba(var(--bs-primary-rgb), 0.08);
+        border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+        bottom: -50px;
+        left: -50px;
+        top: auto;
+        right: auto;
+        animation-duration: 12s;
+        animation-delay: 2s;
+    }
+    
+    @keyframes blob-movement {
+        0% {
+            border-radius: 42% 58% 70% 30% / 45% 45% 55% 55%;
+            transform: rotate(0deg);
+        }
+        50% {
+            border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+            transform: rotate(180deg);
+        }
+        100% {
+            border-radius: 42% 58% 70% 30% / 45% 45% 55% 55%;
+            transform: rotate(360deg);
+        }
+    }
+    
+    .features-section {
+        margin-bottom: 4rem;
+    }
+    
+    .feature-card {
+        border: none;
+        border-radius: 0.5rem;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        height: 100%;
+        transition: all 0.3s ease;
+    }
+    
+    .feature-card:hover {
+        transform: translateY(-0.25rem);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+    
+    .feature-icon {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        color: var(--bs-primary);
+    }
+    
+    .feature-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+    
+    .feature-description {
+        color: var(--bs-secondary);
+        font-size: 0.9rem;
+    }
+    
+    .ai-card {
+        position: relative;
+        overflow: hidden;
+        z-index: 1;
+    }
+    
+    .ai-card .ai-blob {
+        position: absolute;
+        width: 150px;
+        height: 150px;
+        background-color: rgba(var(--bs-primary-rgb), 0.15);
+        border-radius: 42% 58% 70% 30% / 45% 45% 55% 55%;
+        top: 50%;
+        left: -40px;
+        transform: translateY(-50%);
+        z-index: -1;
+        animation: blob-movement 15s linear infinite alternate;
+    }
+    
+    .about-section {
+        background-color: rgba(var(--bs-light-rgb), 0.5);
+        border-radius: 0.5rem;
+        padding: 2rem;
+    }
+    
+    .about-title {
+        margin-bottom: 1.5rem;
+        color: var(--bs-primary);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Приветственная секция -->
+<div class="welcome-section">
+    <div class="blob-shape"></div>
+    <div class="blob-shape"></div>
+    <h1 class="welcome-title">Добро пожаловать в ТурбоHelper!</h1>
+    <p class="lead">Ваш многофункциональный инструмент для работы с корпоративными данными</p>
+</div>
+
+<!-- Секция функций -->
+<div class="features-section">
+    <h2 class="text-center mb-4">Наши возможности</h2>
+    
+    <div class="row g-4">
+        <!-- Новости Холдингов -->
+        {% if not current_user.is_authenticated or has_feature_access(current_user, 'holdings') %}
+        <div class="col-md-4">
+            <div class="card feature-card">
+                <div class="card-body text-center">
+                    <div class="feature-icon">
+                        <i class="fas fa-building"></i>
+                    </div>
+                    <h3 class="feature-title">Новости Холдингов</h3>
+                    <p class="feature-description">Оставайтесь в курсе последних событий группы компаний и холдингов</p>
+                    <a href="/holdings" class="btn btn-sm btn-outline-primary mt-3">Перейти <i class="fas fa-arrow-right ms-1"></i></a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Новости Конкурентов -->
+        {% if not current_user.is_authenticated or has_feature_access(current_user, 'competitors') %}
+        <div class="col-md-4">
+            <div class="card feature-card">
+                <div class="card-body text-center">
+                    <div class="feature-icon">
+                        <i class="fas fa-industry"></i>
+                    </div>
+                    <h3 class="feature-title">Новости Конкурентов</h3>
+                    <p class="feature-description">Следите за новостями конкурентов и отраслевыми тенденциями</p>
+                    <a href="/competitors" class="btn btn-sm btn-outline-primary mt-3">Перейти <i class="fas fa-arrow-right ms-1"></i></a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- QR-код -->
+        {% if not current_user.is_authenticated or has_feature_access(current_user, 'qr') %}
+        <div class="col-md-4">
+            <div class="card feature-card">
+                <div class="card-body text-center">
+                    <div class="feature-icon">
+                        <i class="fas fa-qrcode"></i>
+                    </div>
+                    <h3 class="feature-title">Генератор QR-кодов</h3>
+                    <p class="feature-description">Создавайте QR-коды для быстрого доступа к важной информации</p>
+                    <a href="/qr" class="btn btn-sm btn-outline-primary mt-3">Перейти <i class="fas fa-arrow-right ms-1"></i></a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Нейросети -->
+        {% if not current_user.is_authenticated or has_feature_access(current_user, 'ai') %}
+        <div class="col-md-4 mt-4">
+            <div class="card feature-card ai-card">
+                <div class="ai-blob"></div>
+                <div class="card-body text-center">
+                    <div class="feature-icon">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <h3 class="feature-title">Нейросети</h3>
+                    <p class="feature-description">Используйте возможности ИИ для оптимизации рабочих процессов</p>
+                    <a href="/ai" class="btn btn-sm btn-outline-primary mt-3">Перейти <i class="fas fa-arrow-right ms-1"></i></a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Аналитика -->
+        {% if not current_user.is_authenticated or has_feature_access(current_user, 'analytics') %}
+        <div class="col-md-4 mt-4">
+            <div class="card feature-card">
+                <div class="card-body text-center">
+                    <div class="feature-icon">
+                        <i class="fas fa-chart-pie"></i>
+                    </div>
+                    <h3 class="feature-title">Аналитика</h3>
+                    <p class="feature-description">Анализируйте данные для принятия обоснованных бизнес-решений</p>
+                    <a href="/analytics" class="btn btn-sm btn-outline-primary mt-3">Перейти <i class="fas fa-arrow-right ms-1"></i></a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Информация о компаниях -->
+        {% if not current_user.is_authenticated or has_feature_access(current_user, 'companies') %}
+        <div class="col-md-4 mt-4">
+            <div class="card feature-card">
+                <div class="card-body text-center">
+                    <div class="feature-icon">
+                        <i class="fas fa-building"></i>
+                    </div>
+                    <h3 class="feature-title">Информация о компаниях</h3>
+                    <p class="feature-description">Получайте актуальные данные о компаниях, их реквизитах и финансах</p>
+                    <a href="/companies" class="btn btn-sm btn-outline-primary mt-3">Перейти <i class="fas fa-arrow-right ms-1"></i></a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Дашборды -->
+        {% if current_user.is_authenticated and (current_user.is_admin or 'руководитель' in current_user.position.lower()) %}
+        <div class="col-md-4 mt-4">
+            <div class="card feature-card">
+                <div class="card-body text-center">
+                    <div class="feature-icon">
+                        <i class="fas fa-tachometer-alt"></i>
+                    </div>
+                    <h3 class="feature-title">Дашборды</h3>
+                    <p class="feature-description">Контролируйте ключевые показатели компании в режиме реального времени</p>
+                    <a href="/dashboard" class="btn btn-sm btn-outline-primary mt-3">Перейти <i class="fas fa-arrow-right ms-1"></i></a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- О системе -->
+<div class="about-section mt-5">
+    <h2 class="about-title text-center">О системе ТурбоHelper</h2>
+    <p>ТурбоHelper – это многофункциональная платформа, разработанная для оптимизации рабочих процессов и повышения эффективности вашей компании. Система предоставляет доступ к различным инструментам для мониторинга, анализа и управления информацией.</p>
+    
+    <p>Основные преимущества использования ТурбоHelper:</p>
+    <ul>
+        <li>Централизованный доступ к корпоративной информации</li>
+        <li>Мониторинг новостей холдингов и конкурентов</li>
+        <li>Современные инструменты для анализа данных</li>
+        <li>Интеграция с нейросетями для автоматизации задач</li>
+        <li>Персонализированный интерфейс с учетом прав доступа</li>
+    </ul>
+    
+    <p>Чтобы начать работу, выберите нужную функцию из меню или воспользуйтесь ссылками выше.</p>
+</div>
+{% endblock %} 

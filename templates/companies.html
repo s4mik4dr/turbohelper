@@ -1,0 +1,1121 @@
+{% extends "base.html" %}
+
+{% block title %}Поиск информации по компаниям{% endblock %}
+
+{% block additional_head %}
+<style>
+    .search-card {
+        border-radius: 0;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+    }
+    
+    .search-header {
+        background-color: #007bff;
+        color: white;
+        padding: 15px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+    }
+    
+    .search-header i {
+        margin-right: 10px;
+    }
+    
+    .quick-search-header {
+        background-color: #28a745;
+        color: white;
+    }
+    
+    .popular-header {
+        background-color: #17a2b8;
+        color: white;
+    }
+    
+    .search-body {
+        padding: 20px;
+    }
+    
+    .search-button {
+        width: 100%;
+        margin-top: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .search-button i {
+        margin-right: 10px;
+    }
+    
+    .quick-search-btn {
+        width: 100%;
+        margin-bottom: 10px;
+        text-align: left;
+        display: flex;
+        align-items: center;
+    }
+    
+    .quick-search-btn i {
+        margin-right: 10px;
+    }
+    
+    .placeholder-icon {
+        font-size: 5rem;
+        color: #6c757d;
+        opacity: 0.3;
+        margin-bottom: 20px;
+    }
+    
+    .result-section {
+        margin-top: 20px;
+    }
+    
+    .info-card {
+        border: 1px solid rgba(0, 0, 0, 0.125);
+        border-radius: 8px;
+        margin-bottom: 25px;
+        overflow: hidden; /* Предотвращает переполнение */
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+    }
+    
+    .info-header {
+        background-color: #f8f9fa;
+        padding: 12px 15px;
+        font-weight: 600;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+        display: flex;
+        align-items: center;
+    }
+    
+    .company-data-row {
+        display: flex;
+        padding: 12px 15px;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        flex-wrap: wrap;
+        min-height: 50px; /* Увеличиваем минимальную высоту для строк */
+        align-items: flex-start;
+    }
+    
+    .company-data-row:last-child {
+        border-bottom: none;
+    }
+    
+    .company-data-label {
+        font-weight: 600;
+        width: 40%;
+        min-width: 140px;
+        padding-right: 15px;
+        color: #495057;
+    }
+    
+    .company-data-value {
+        width: 60%;
+        flex-grow: 1;
+        word-break: break-word;
+        overflow-wrap: break-word;
+        line-height: 1.5;
+        padding: 2px 0;
+    }
+    
+    #company-name {
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin-bottom: 1rem;
+        word-break: break-word;
+        line-height: 1.3;
+        color: #343a40;
+        padding: 0 5px;
+    }
+    
+    /* Для лучшего отображения ОКВЭД */
+    #company-okved {
+        white-space: pre-wrap;
+        word-break: break-word;
+        line-height: 1.5;
+    }
+    
+    .card-body {
+        padding: 0; /* Убираем внутренние отступы для увеличения пространства */
+    }
+    
+    /* Улучшаем отображение полного наименования */
+    #company-full-name {
+        white-space: pre-wrap; /* Сохраняет переносы строк */
+        line-height: 1.5;
+    }
+    
+    /* Улучшение для адреса */
+    #company-address {
+        white-space: pre-wrap;
+        line-height: 1.5;
+    }
+    
+    body.dark-mode .search-card {
+        background-color: #2c3136;
+        border-color: #444;
+    }
+    
+    body.dark-mode .info-header {
+        background-color: #343a40;
+        color: white;
+        border-color: #444;
+    }
+    
+    body.dark-mode .info-card {
+        background-color: #2c3136;
+        border-color: #444;
+    }
+    
+    /* Внешний контейнер для результатов поиска */
+    #search-results {
+        margin-bottom: 30px;
+    }
+    
+    /* Улучшение стилей таблицы финансовой отчетности */
+    #detailed-finance-container .table {
+        margin-bottom: 0;
+    }
+    
+    #detailed-finance-container .table th {
+        background-color: #f8f9fa;
+        font-weight: 600;
+    }
+    
+    #detailed-finance-container .table td {
+        vertical-align: middle;
+    }
+    
+    /* Улучшение адаптивности для мобильных устройств */
+    @media (max-width: 768px) {
+        .company-data-label {
+            width: 100%;
+            padding-bottom: 4px;
+        }
+        .company-data-value {
+            width: 100%;
+        }
+        .company-data-row {
+            flex-direction: column;
+            padding: 12px 15px;
+        }
+        #company-name {
+            font-size: 1.3rem;
+            margin-top: 10px;
+        }
+        .info-header {
+            padding: 10px;
+            font-size: 0.95rem;
+        }
+    }
+    
+    /* Специальные стили для статуса компании */
+    #company-status {
+        font-weight: 500;
+    }
+    
+        /* Улучшение для списка дополнительных ОКВЭД */    #additional-okved {        max-height: 500px;        overflow-y: auto;    }        #additional-okved .list-group-item {        padding: 12px 15px;        line-height: 1.5;        word-break: break-word;        transition: all 0.2s ease;        border-left: 4px solid transparent;    }        #additional-okved .list-group-item:hover {        background-color: rgba(0, 123, 255, 0.05);        border-left-color: #007bff;    }        body.dark-mode .mb-4.bg-light {        background-color: #343a40 !important;    }        body.dark-mode #additional-okved .list-group-item:hover {        background-color: rgba(255, 255, 255, 0.05);    }        #company-okved {        font-size: 1.05rem;        padding: 8px 12px;        border-radius: 4px;    }        .okved-code {        font-weight: 600;        color: #0056b3;        margin-right: 8px;    }        body.dark-mode .okved-code {        color: #8bb9fe;    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-12 mb-4">
+            <h1 class="d-flex align-items-center">
+                <i class="fas fa-building me-2"></i> Поиск информации по компаниям
+            </h1>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4">
+            <!-- Основной блок поиска -->
+            <div class="search-card">
+                <div class="search-header">
+                    <i class="fas fa-search"></i> Поиск компании
+                </div>
+                <div class="search-body">
+                    <form id="company-search-form">
+                        <div class="mb-3">
+                            <label for="search-type" class="form-label">Искать по:</label>
+                            <select class="form-select" id="search-type">
+                                <option value="name" selected>Названию</option>
+                                <option value="inn">ИНН</option>
+                                <option value="ogrn">ОГРН</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="search-query" class="form-label">Поисковый запрос:</label>
+                            <input type="text" class="form-control" id="search-query" placeholder="Введите запрос" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary search-button">
+                            <i class="fas fa-search"></i> Найти
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Блок быстрого поиска -->
+            <div class="search-card">
+                <div class="search-header quick-search-header">
+                    <i class="fas fa-bolt"></i> Быстрый поиск
+                </div>
+                <div class="search-body">
+                    <button id="gazprom-btn" class="btn btn-outline-primary quick-search-btn">
+                        <i class="fas fa-industry"></i> Газпром (ИНН: 7736050003)
+                    </button>
+                    <button id="rosneft-btn" class="btn btn-outline-primary quick-search-btn">
+                        <i class="fas fa-oil-can"></i> Роснефть (ИНН: 7706107510)
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <!-- Плейсхолдер поиска -->
+            <div id="search-placeholder" class="text-center py-5">
+                <i class="fas fa-search placeholder-icon"></i>
+                <h3 class="h4">Введите запрос для поиска</h3>
+                <p class="text-muted">Поиск можно выполнить по названию компании, ИНН или ОГРН</p>
+            </div>
+
+            <!-- Индикатор загрузки -->
+            <div id="search-loading" style="display: none;" class="text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Поиск...</span>
+                </div>
+                <h3 class="h4 mt-3">Выполняется поиск</h3>
+                <p class="text-muted">Пожалуйста, подождите...</p>
+            </div>
+
+            <!-- Сообщение об ошибке -->
+            <div id="search-error" style="display: none;" class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <span id="error-message"></span>
+            </div>
+
+            <!-- Результаты поиска -->
+            <div id="search-results" style="display: none;">
+                <!-- Информация о запросе -->
+                <div class="alert alert-info mb-4">
+                    <h5 class="mb-2"><i class="fas fa-info-circle me-2"></i> Информация о запросе:</h5>
+                    <p class="mb-1"><strong>Поисковый запрос:</strong> <span id="info-query"></span></p>
+                    <p class="mb-1"><strong>Тип поиска:</strong> <span id="info-search-type"></span></p>
+                    <p class="mb-0"><strong>Найдена компания:</strong> <span id="info-company-name"></span> (ИНН: <span id="info-company-inn"></span>)</p>
+                </div>
+
+                <!-- Основная информация о компании -->
+                <h2 id="company-name" class="mb-4"></h2>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-4">
+                        <div class="info-card">
+                            <div class="info-header">
+                                <i class="fas fa-info-circle me-2"></i> Основная информация
+                            </div>
+                            <div class="card-body">
+                                <div class="company-data-row">
+                                    <span class="company-data-label">ИНН:</span>
+                                    <span id="company-inn" class="company-data-value"></span>
+                                </div>
+                                <div class="company-data-row">
+                                    <span class="company-data-label">ОГРН:</span>
+                                    <span id="company-ogrn" class="company-data-value"></span>
+                                </div>
+                                <div class="company-data-row">
+                                    <span class="company-data-label">Дата регистрации:</span>
+                                    <span id="company-reg-date" class="company-data-value"></span>
+                                </div>
+                                <div class="company-data-row">
+                                    <span class="company-data-label">Статус:</span>
+                                    <span id="company-status" class="company-data-value"></span>
+                                </div>
+                                <div class="company-data-row">
+                                    <span class="company-data-label">Руководитель:</span>
+                                    <span id="company-ceo" class="company-data-value"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6 mb-4">
+                        <div class="info-card">
+                            <div class="info-header">
+                                <i class="fas fa-building me-2"></i> Дополнительная информация
+                            </div>
+                            <div class="card-body">
+                                <div class="company-data-row">
+                                    <span class="company-data-label">Полное наименование:</span>
+                                    <span id="company-full-name" class="company-data-value"></span>
+                                </div>
+                                <div class="company-data-row">
+                                    <span class="company-data-label">Адрес:</span>
+                                    <span id="company-address" class="company-data-value"></span>
+                                </div>
+                                <div class="company-data-row">
+                                    <span class="company-data-label">Количество сотрудников:</span>
+                                    <span id="company-employees" class="company-data-value"></span>
+                                </div>
+                                <div id="auth-capital-row" class="company-data-row">
+                                    <span class="company-data-label">Уставный капитал:</span>
+                                    <span id="company-capital" class="company-data-value"></span>
+                                </div>
+                                <div id="auth-capital-type-row" class="company-data-row">
+                                    <span class="company-data-label">Тип капитала:</span>
+                                    <span id="company-capital-type" class="company-data-value"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Направление деятельности --><div class="info-card mb-4">    <div class="info-header">        <i class="fas fa-briefcase me-2"></i> Направление/сфера деятельности    </div>    <div class="card-body">        <div class="mb-4 bg-light p-3 rounded">                                    <h6 class="fw-bold mb-2"><i class="fas fa-star-of-life text-primary me-2"></i> Основной ОКВЭД:</h6>                                    <div id="company-okved" class="ps-4 pb-1"></div>                                </div>                                        <div id="additional-okved-container">                                    <h6 class="fw-bold d-flex align-items-center mb-3">                                                <i class="fas fa-list text-success me-2"></i> Дополнительные виды деятельности                 <span id="additional-okved-badge" class="ms-2 badge bg-info text-white rounded-pill"></span>            </h6>                                    <div id="additional-okved" class="list-group"></div>        </div>    </div></div>
+
+                
+                
+                <!-- Детальная финансовая отчетность -->
+                <div id="detailed-finance-container" class="info-card mb-4" style="display: none;">
+                    <div class="info-header">
+                        <i class="fas fa-file-invoice-dollar me-2"></i> Детальная финансовая отчетность
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Год</th>
+                                        <th>Выручка (руб.)</th>
+                                        <th>Прибыль (руб.)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="detailed-financial-data"></tbody>
+                            </table>
+                        </div>
+                        
+                        <div id="official-reports-container" style="display: none;">
+                            <h6 class="mt-4 mb-3">Официальные отчеты ФНС</h6>
+                            <div id="official-reports-list" class="list-group"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Источник данных -->
+                <div class="alert alert-secondary">
+                    <i class="fas fa-link me-1"></i> Источник данных: <a id="company-source-link" href="#" target="_blank">Checko.ru</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+console.log('Загрузка скрипта companies.html');
+// Переменная для хранения графикаlet financeChart = null;
+
+document.addEventListener('DOMContentLoaded', function() {    
+    console.log('DOM загружен, инициализация страницы companies.html');    
+    
+    // Обработчик кнопки быстрого поиска Газпрома    
+    document.getElementById('gazprom-btn').addEventListener('click', function() {        
+        document.getElementById('search-type').value = 'inn';        
+        document.getElementById('search-query').value = '7736050003';        
+        searchCompany('7736050003', 'inn');    
+    });    
+    
+    // Обработчик кнопки быстрого поиска Роснефти    
+    document.getElementById('rosneft-btn').addEventListener('click', function() {        
+        document.getElementById('search-type').value = 'inn';        
+        document.getElementById('search-query').value = '7706107510';        
+        searchCompany('7706107510', 'inn');    
+    });    
+    
+        // Глобальный обработчик для кнопки переключения дополнительных ОКВЭД    // Не используем глобальный обработчик, так как добавляем обработчик напрямую к кнопке    console.log('Инициализация завершена');
+});
+
+// Обработчик отправки формы поиска
+document.getElementById('company-search-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    console.log('Отправка формы поиска');
+    
+    const searchType = document.getElementById('search-type').value;
+    const searchQuery = document.getElementById('search-query').value.trim();
+    console.log('Тип поиска:', searchType, 'Запрос:', searchQuery);
+    
+    if (!searchQuery) {
+        showError('Пожалуйста, введите поисковый запрос');
+        return;
+    }
+    
+    searchCompany(searchQuery, searchType);
+});
+
+// Функция для поиска компании
+function searchCompany(query, searchBy) {
+    console.log('Вызов функции поиска компании:', query, searchBy);
+    
+    // Скрываем результаты и показываем индикатор загрузки
+    document.getElementById('search-results').style.display = 'none';
+    document.getElementById('search-placeholder').style.display = 'none';
+    document.getElementById('search-error').style.display = 'none';
+    document.getElementById('search-loading').style.display = 'block';
+    
+    // Если есть график, уничтожаем его перед новым поиском
+    if (financeChart) {
+        financeChart.destroy();
+        financeChart = null;
+    }
+    
+    // Отображаем информацию о запросе в загрузчике
+    const loadingInfo = document.getElementById('search-loading');
+    loadingInfo.innerHTML = `
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Поиск...</span>
+        </div>
+        <h3 class="h4 mt-3">Выполняется поиск</h3>
+        <p class="text-muted">Запрос: <strong>${query}</strong> (поиск по ${searchBy === 'inn' ? 'ИНН' : searchBy === 'ogrn' ? 'ОГРН' : 'названию'})</p>
+        <p class="text-muted">Пожалуйста, подождите...</p>
+    `;
+    
+    // Устанавливаем таймаут для запроса (30 секунд)
+    const timeoutId = setTimeout(() => {
+        // Если запрос выполняется слишком долго, прерываем его
+        showError('Превышено время ожидания ответа от сервера. Пожалуйста, повторите запрос позже.');
+    }, 30000);
+    
+    // Формируем данные запроса
+    const requestData = {
+        query: query,
+        search_by: searchBy
+    };
+    
+    // Отправляем запрос на поиск
+    fetch('/api/company/search', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify(requestData)
+    })
+    .then(response => {
+        console.log('Получен ответ от API поиска:', response.status);
+        clearTimeout(timeoutId); // Очищаем таймаут, так как получен ответ
+        
+        if (!response.ok) {
+            throw new Error(`Ошибка сервера: ${response.status} ${response.statusText}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Данные от API поиска:', data);
+        
+        // Детальное логирование данных о компании для отладки
+        if (data.company) {
+            console.log('ДАННЫЕ О КОМПАНИИ:', data.company);
+            console.log('Основной ОКВЭД:', data.company.okved_code, data.company.activity);
+            
+            // Проверяем наличие и структуру дополнительных ОКВЭД
+            if (data.company.additional_okved) {
+                console.log('Дополнительные ОКВЭД присутствуют, количество:', data.company.additional_okved.length);
+                console.log('Структура дополнительных ОКВЭД:', data.company.additional_okved);
+            } else {
+                console.log('Дополнительные ОКВЭД отсутствуют в ответе API');
+                console.log('Проверка всех полей на наличие ОКВЭД:', Object.keys(data.company));
+            }
+        }
+        
+        // Добавляем логирование для проверки наличия finance_raw
+        if (data.company && data.company.finance_raw) {
+            console.log('finance_raw присутствует в ответе API', data.company.finance_raw);
+        } else {
+            console.log('finance_raw отсутствует в ответе API или пустой', data.company);
+        }
+        
+        // Скрываем индикатор загрузки
+        document.getElementById('search-loading').style.display = 'none';
+        
+        if (data.error) {
+            showError(data.error);
+            return;
+        }
+        
+        // Заполняем информацию о запросе
+        document.getElementById('info-query').textContent = query;
+        document.getElementById('info-search-type').textContent = searchBy === 'inn' ? 'ИНН' : searchBy === 'ogrn' ? 'ОГРН' : 'Название';
+        document.getElementById('info-company-name').textContent = data.company.name;
+        document.getElementById('info-company-inn').textContent = data.company.inn;
+        
+        // Показываем результаты
+        document.getElementById('search-results').style.display = 'block';
+        
+        displayCompanyInfo(data.company);
+    })
+    .catch(error => {
+        clearTimeout(timeoutId); // Очищаем таймаут в случае ошибки
+        document.getElementById('search-loading').style.display = 'none';
+        console.error('Ошибка при поиске компании:', error);
+        
+        // Показываем детализированное сообщение об ошибке пользователю
+        if (error.message && error.message.includes('404')) {
+            showError('Компания не найдена. Возможно, проблемы с доступом к API или неверный ИНН/ОГРН.');
+        } else if (error.message && error.message.includes('401')) {
+            showError('Ошибка авторизации API. Пожалуйста, обратитесь к администратору.');
+        } else if (error.message && error.message.includes('429')) {
+            showError('Превышен лимит запросов к API. Пожалуйста, повторите запрос позже.');
+        } else {
+            showError('Произошла ошибка при выполнении запроса: ' + error.message);
+        }
+    });
+}
+
+// Функция для отображения информации о компании
+function displayCompanyInfo(company) {
+    document.getElementById('company-inn').textContent = company.inn || 'Нет данных';
+    document.getElementById('company-ogrn').textContent = company.ogrn || 'Нет данных';
+    document.getElementById('company-reg-date').textContent = company.registration_date || 'Нет данных';
+    
+    // Улучшенная обработка статуса компании
+    let statusText = 'Нет данных';
+    let statusClass = '';
+    
+    if (company.status) {
+        if (typeof company.status === 'object') {
+            // Если статус является объектом, проверяем его содержимое
+            if (company.status.Значение) {
+                statusText = company.status.Значение;
+            } else if (Object.keys(company.status).length > 0) {
+                // Пытаемся извлечь текст из любого доступного свойства объекта
+                const statusValues = Object.values(company.status);
+                statusText = statusValues[0] || 'Действующая';
+            } else {
+                statusText = 'Действующая';
+            }
+        } else {
+            // Если статус строка, используем её напрямую
+            statusText = company.status;
+        }
+    }
+    
+    // Добавляем цветовую индикацию статуса
+    if (statusText.toLowerCase().includes('действующ')) {
+        statusClass = 'text-success';
+    } else if (statusText.toLowerCase().includes('ликвид') || statusText.toLowerCase().includes('исключ')) {
+        statusClass = 'text-danger';
+    } else if (statusText.toLowerCase().includes('реорг') || statusText.toLowerCase().includes('банкрот')) {
+        statusClass = 'text-warning';
+    }
+    
+    const statusElement = document.getElementById('company-status');
+    statusElement.textContent = statusText;
+    if (statusClass) {
+        statusElement.className = `company-data-value ${statusClass}`;
+    } else {
+        statusElement.className = 'company-data-value';
+    }
+    
+    document.getElementById('company-ceo').textContent = company.ceo || 'Нет данных';
+    document.getElementById('company-employees').textContent = company.employees_count || 'Нет данных';
+    const companyOkvedElement = document.getElementById('company-okved');    if (company.okved_code || company.activity) {        const codeSpan = document.createElement('span');        codeSpan.className = 'okved-code fw-bold';        codeSpan.textContent = company.okved_code || '';                const nameSpan = document.createElement('span');        nameSpan.textContent = company.activity || 'Нет данных';                companyOkvedElement.innerHTML = '';        companyOkvedElement.appendChild(codeSpan);        companyOkvedElement.appendChild(nameSpan);    } else {        companyOkvedElement.textContent = 'Нет данных';    }
+    
+    // Устанавливаем ссылку на источник
+    document.getElementById('company-source-link').href = 
+        `https://checko.ru/company/inn/${company.inn}`;
+    
+    // Улучшенная обработка адреса
+    let addressText = 'Нет данных';
+    if (company.address) {
+        if (typeof company.address === 'object') {
+            if (company.address.АдресРФ) {
+                addressText = company.address.АдресРФ;
+            } else if (company.address.index || company.address.city || company.address.street) {
+                let addressParts = [];
+                if (company.address.index) addressParts.push(company.address.index);
+                if (company.address.city) addressParts.push(company.address.city);
+                if (company.address.street) addressParts.push(company.address.street);
+                if (company.address.building) addressParts.push(company.address.building);
+                addressText = addressParts.join(', ');
+            } else {
+                // Проверяем наличие вложенных объектов с данными адреса
+                const addressKeys = Object.keys(company.address);
+                if (addressKeys.length > 0) {
+                    try {
+                        // Если есть вложенный объект с данными, пробуем собрать адрес из него
+                        let parts = [];
+                        for (const key of addressKeys) {
+                            if (typeof company.address[key] === 'string') {
+                                parts.push(company.address[key]);
+                            } else if (typeof company.address[key] === 'object' && company.address[key] !== null) {
+                                const subParts = Object.values(company.address[key]).filter(v => typeof v === 'string');
+                                parts = parts.concat(subParts);
+                            }
+                        }
+                        if (parts.length > 0) {
+                            addressText = parts.join(', ');
+                        } else {
+                            addressText = JSON.stringify(company.address);
+                        }
+                    } catch (e) {
+                        addressText = 'Объект адреса не может быть преобразован в строку';
+                    }
+                }
+            }
+        } else if (typeof company.address === 'string') {
+            addressText = company.address;
+        }
+    }
+    document.getElementById('company-address').textContent = addressText;
+    
+    // Отображение данных о полном наименовании компании
+    document.getElementById('company-full-name').textContent = company.full_name || 'Нет данных';
+    
+    const capitalRow = document.getElementById('auth-capital-row');
+    const capitalTypeRow = document.getElementById('auth-capital-type-row');
+    if (company.authorized_capital) {
+        capitalRow.style.display = '';
+        capitalTypeRow.style.display = '';
+        const amount = company.authorized_capital.amount;
+        let formattedAmount = 'Нет данных';
+        if (amount) {
+            try {
+                formattedAmount = new Intl.NumberFormat('ru-RU', {
+                    style: 'currency',
+                    currency: 'RUB',
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0
+                }).format(Number(amount));
+            } catch (e) {
+                formattedAmount = `${amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ")} ₽`;
+            }
+        }
+        document.getElementById('company-capital').textContent = formattedAmount;
+        document.getElementById('company-capital-type').textContent = 
+            company.authorized_capital.type || 'Нет данных';
+    } else {
+        capitalRow.style.display = 'none';
+        capitalTypeRow.style.display = 'none';
+    }
+    
+    // Дополнительные ОКВЭД                
+    const additionalOkvedContainer = document.getElementById('additional-okved-container');                
+    const additionalOkvedList = document.getElementById('additional-okved');                
+    const additionalOkvedBadge = document.getElementById('additional-okved-badge');                
+    additionalOkvedList.innerHTML = '';                
+    
+    // Проверяем разные возможные поля для дополнительных ОКВЭД    
+    let additionalOkveds = null;
+    
+    // Расширенная логика поиска доп. ОКВЭД в различных структурах ответа API
+    console.log('Поиск дополнительных ОКВЭД в данных компании:', company.inn);
+    
+    // Сначала ищем в стандартных полях
+    if (company.additional_okved && Array.isArray(company.additional_okved) && company.additional_okved.length > 0) {
+        console.log('Найдены ОКВЭД в поле additional_okved:', company.additional_okved.length);
+        additionalOkveds = company.additional_okved;
+    } else if (company.additional_okveds && Array.isArray(company.additional_okveds) && company.additional_okveds.length > 0) {
+        console.log('Найдены ОКВЭД в поле additional_okveds:', company.additional_okveds.length);
+        additionalOkveds = company.additional_okveds;
+    } else if (company.okveds && Array.isArray(company.okveds)) {
+        console.log('Найдены ОКВЭД в поле okveds:', company.okveds.length);
+        // Фильтруем основной ОКВЭД, если он в этом же массиве
+        additionalOkveds = company.okveds.filter(item => 
+            item.code !== company.okved_code && item.id !== company.okved_code
+        );
+    } else if (company.okved && Array.isArray(company.okved)) {
+        console.log('Найдены ОКВЭД в поле okved как массив:', company.okved.length);
+        additionalOkveds = company.okved.filter(item => 
+            item.code !== company.okved_code && item.id !== company.okved_code
+        );
+    } 
+    
+    // Если пока ничего не нашли, ищем в сырых данных API
+    if (!additionalOkveds && company.raw_data) {
+        console.log('Ищем в сырых данных API (raw_data)');
+        
+        // Поиск в разных структурах сырых данных
+        if (company.raw_data.company && company.raw_data.company.data) {
+            const data = company.raw_data.company.data;
+            
+            if (data.ОКВЭДДоп && Array.isArray(data.ОКВЭДДоп) && data.ОКВЭДДоп.length > 0) {
+                console.log('Найдены ОКВЭД в raw_data.company.data.ОКВЭДДоп:', data.ОКВЭДДоп.length);
+                additionalOkveds = data.ОКВЭДДоп.map(okved => ({
+                    code: okved.Код || '',
+                    name: okved.Наим || '',
+                    version: okved.Версия || ''
+                }));
+            }
+        }
+    }
+    
+    // Логируем доступные поля для отладки
+    console.log('Все поля компании:', Object.keys(company));
+    if (company.raw_data) {
+        console.log('Структура raw_data:', Object.keys(company.raw_data));
+    }
+    
+    if (additionalOkveds && additionalOkveds.length > 0) {
+        console.log('У компании есть дополнительные ОКВЭД:', additionalOkveds.length);
+        additionalOkvedContainer.style.display = 'block';
+        
+        // Показываем счетчик, если есть дополнительные ОКВЭД
+        additionalOkvedBadge.style.display = 'inline-block';
+        additionalOkvedBadge.textContent = additionalOkveds.length;
+        
+        // Сортировка кодов ОКВЭД по номеру                
+        const sortedOkveds = [...additionalOkveds].sort((a, b) => {
+            const codeA = a.code || a.id || '';
+            const codeB = b.code || b.id || '';
+            return codeA.localeCompare(codeB, undefined, { numeric: true });
+        });
+        
+        // Отображаем все коды ОКВЭД
+        sortedOkveds.forEach((okved, index) => {
+            const item = document.createElement('div');
+            item.className = 'list-group-item';
+            
+            // Создаем элемент для кода ОКВЭД
+            const codeSpan = document.createElement('span');
+            codeSpan.className = 'okved-code';
+            codeSpan.textContent = okved.code || okved.id || okved.Код || '';
+            
+            // Создаем элемент для названия ОКВЭД
+            const nameSpan = document.createElement('span');
+            nameSpan.textContent = okved.name || okved.description || okved.text || okved.Наим || '';
+            
+            // Добавляем код и название в элемент списка
+            item.appendChild(codeSpan);
+            item.appendChild(nameSpan);
+            
+            // Добавляем элемент в список
+            additionalOkvedList.appendChild(item);
+        });
+    } else {
+        console.log('Дополнительные ОКВЭД не найдены для компании:', company.inn);
+        
+        // Проверяем наличие данных в raw_data
+        if (company.raw_data && company.raw_data.company) {
+            console.log('Доступные поля в raw_data.company:', Object.keys(company.raw_data.company));
+            if (company.raw_data.company.data) {
+                console.log('Доступные поля в raw_data.company.data:', Object.keys(company.raw_data.company.data));
+            }
+        }
+        
+        // Скрываем контейнер, если нет дополнительных ОКВЭД
+        additionalOkvedContainer.style.display = 'none';
+    }
+    
+    // Отображаем детальную финансовую отчетность, если она есть
+    displayDetailedFinancialStatements(company);
+}
+
+// Функция для отображения детальной финансовой отчетности
+function displayDetailedFinancialStatements(company) {
+    const detailedFinanceContainer = document.getElementById('detailed-finance-container');
+    const detailedFinancialDataTable = document.getElementById('detailed-financial-data');
+    const officialReportsContainer = document.getElementById('official-reports-container');
+    const officialReportsList = document.getElementById('official-reports-list');
+    
+    // Скрываем контейнеры по умолчанию
+    detailedFinanceContainer.style.display = 'none';
+    officialReportsContainer.style.display = 'none';
+    detailedFinancialDataTable.innerHTML = '';
+    officialReportsList.innerHTML = '';
+    
+    // Проверяем наличие данных для детальной отчетности
+    if (!company.finance_raw) {
+        console.log('Нет данных finance_raw для отображения детальной отчетности');
+        return;
+    }
+    
+    console.log('Доступны данные finance_raw:', company.finance_raw);
+    const financeData = company.finance_raw;
+    
+    // Проверяем наличие данных в различных форматах
+    let yearsData = null;
+    let hasFinancialData = false;
+    
+    // Пробуем найти данные в разных структурах
+    if (financeData.data) {
+        if (financeData.data.years) {
+            // Формат от API finances/years
+            hasFinancialData = displayYearsDataFromArray(financeData.data.years);
+        } else if (typeof financeData.data === 'object') {
+            // Формат с годами в виде ключей объекта
+            yearsData = financeData.data;
+            hasFinancialData = displayYearsDataFromObject(yearsData);
+        }
+    } else if (financeData.years) {
+        // Прямой массив с годовыми данными
+        hasFinancialData = displayYearsDataFromArray(financeData.years);
+    }
+    
+    // Показываем контейнер, только если есть данные или официальные отчеты
+    if (hasFinancialData || 
+        (financeData["bo.nalog.ru"] && financeData["bo.nalog.ru"]["Отчет"] && 
+         Object.keys(financeData["bo.nalog.ru"]["Отчет"]).length > 0)) {
+        detailedFinanceContainer.style.display = 'block';
+    }
+    
+    // Функция для отображения данных из массива лет
+    function displayYearsDataFromArray(yearsArray) {
+        if (!Array.isArray(yearsArray) || yearsArray.length === 0) {
+            console.log('Массив лет пуст или не является массивом');
+            noDataMessage();
+            return false;
+        }
+        
+        console.log('Обрабатываем массив лет:', yearsArray);
+        const allYearsData = [];
+        
+        // Сортируем по годам
+        yearsArray.sort((a, b) => {
+            const yearA = a.year || 0;
+            const yearB = b.year || 0;
+            return yearB - yearA; // Сортировка по убыванию (новые годы сверху)
+        });
+        
+        for (const yearData of yearsArray) {
+            const year = yearData.year;
+            // Ищем выручку и прибыль в разных возможных полях
+            const revenue = yearData.revenue || yearData.Выручка || yearData["2110"];
+            const profit = yearData.profit || yearData.ЧистПрибыль || yearData["2400"];
+            
+            if (year && (revenue !== undefined || profit !== undefined)) {
+                const row = document.createElement('tr');
+                
+                // Форматируем числа с разделителями групп разрядов
+                const formattedRevenue = revenue !== undefined 
+                    ? new Intl.NumberFormat('ru-RU').format(revenue)
+                    : 'Нет данных';
+                
+                const formattedProfit = profit !== undefined 
+                    ? new Intl.NumberFormat('ru-RU').format(profit)
+                    : 'Нет данных';
+                
+                // Добавляем класс для прибыли (зеленый для положительной, красный для отрицательной)
+                const profitClass = profit > 0 ? 'text-success' : profit < 0 ? 'text-danger' : '';
+                
+                row.innerHTML = `
+                    <td>${year}</td>
+                    <td>${formattedRevenue}</td>
+                    <td class="${profitClass}">${formattedProfit}</td>
+                `;
+                detailedFinancialDataTable.appendChild(row);
+                
+                allYearsData.push({
+                    year: year,
+                    revenue: revenue,
+                    profit: profit
+                });
+            }
+        }
+        
+        if (allYearsData.length === 0) {
+            noDataMessage();
+            return false;
+        }
+        
+        // Если есть данные, создаем график
+        if (allYearsData.length > 1) {
+            createFinancialChart(allYearsData);
+        }
+        
+        return true;
+    }
+    
+    // Функция для отображения данных из объекта с годами
+    function displayYearsDataFromObject(yearsObject) {
+        if (!yearsObject || typeof yearsObject !== 'object') {
+            console.log('Объект с годами пуст или не является объектом');
+            noDataMessage();
+            return false;
+        }
+        
+        console.log('Обрабатываем объект с годами:', yearsObject);
+        const allYearsData = [];
+        const years = Object.keys(yearsObject).sort((a, b) => b - a); // Сортировка по убыванию
+        
+        for (const year of years) {
+            const yearData = yearsObject[year];
+            
+            // Ищем выручку (код 2110) и прибыль (код 2400)
+            const revenue = yearData["2110"];
+            const profit = yearData["2400"];
+            
+            if (revenue !== undefined || profit !== undefined) {
+                const row = document.createElement('tr');
+                
+                // Форматируем числа с разделителями групп разрядов
+                const formattedRevenue = revenue !== undefined 
+                    ? new Intl.NumberFormat('ru-RU').format(revenue)
+                    : 'Нет данных';
+                
+                const formattedProfit = profit !== undefined 
+                    ? new Intl.NumberFormat('ru-RU').format(profit)
+                    : 'Нет данных';
+                
+                // Добавляем класс для прибыли (зеленый для положительной, красный для отрицательной)
+                const profitClass = profit > 0 ? 'text-success' : profit < 0 ? 'text-danger' : '';
+                
+                row.innerHTML = `
+                    <td>${year}</td>
+                    <td>${formattedRevenue}</td>
+                    <td class="${profitClass}">${formattedProfit}</td>
+                `;
+                detailedFinancialDataTable.appendChild(row);
+                
+                allYearsData.push({
+                    year: year,
+                    revenue: revenue,
+                    profit: profit
+                });
+            }
+        }
+        
+        if (allYearsData.length === 0) {
+            noDataMessage();
+            return false;
+        }
+        
+        // Если есть данные, создаем график
+        if (allYearsData.length > 1) {
+            createFinancialChart(allYearsData);
+        }
+        
+        return true;
+    }
+    
+    // Функция для создания графика финансовых показателей
+    function createFinancialChart(data) {
+        // Добавляем контейнер для графика, если его еще нет
+        if (!document.getElementById('financial-chart-container')) {
+            const chartContainer = document.createElement('div');
+            chartContainer.id = 'financial-chart-container';
+            chartContainer.className = 'mt-4';
+            chartContainer.innerHTML = '<h6 class="mb-3">График финансовых показателей</h6><canvas id="financial-chart"></canvas>';
+            
+            // Добавляем контейнер в финансовый блок
+            document.getElementById('detailed-finance-container').querySelector('.card-body').appendChild(chartContainer);
+        }
+        
+        // Сортируем данные по годам (по возрастанию для корректного отображения на графике)
+        data.sort((a, b) => a.year - b.year);
+        
+        // Подготавливаем данные для графика
+        const labels = data.map(item => item.year);
+        const revenueData = data.map(item => item.revenue || 0);
+        const profitData = data.map(item => item.profit || 0);
+        
+        // Получаем контекст для рисования
+        const ctx = document.getElementById('financial-chart').getContext('2d');
+        
+        // Уничтожаем предыдущий график, если он существует
+        if (window.financeChart) {
+            window.financeChart.destroy();
+        }
+        
+        // Создаем новый график
+        window.financeChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Выручка',
+                        data: revenueData,
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 2,
+                        tension: 0.1
+                    },
+                    {
+                        label: 'Прибыль',
+                        data: profitData,
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 2,
+                        tension: 0.1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const value = context.raw;
+                                return `${context.dataset.label}: ${new Intl.NumberFormat('ru-RU').format(value)} ₽`;
+                            }
+                        }
+                    },
+                    legend: {
+                        position: 'top',
+                    },
+                    title: {
+                        display: false,
+                        text: 'Финансовые показатели'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        ticks: {
+                            callback: function(value) {
+                                if (value >= 1000000000) {
+                                    return (value / 1000000000).toFixed(1) + ' млрд';
+                                } else if (value >= 1000000) {
+                                    return (value / 1000000).toFixed(1) + ' млн';
+                                } else if (value >= 1000) {
+                                    return (value / 1000).toFixed(1) + ' тыс';
+                                }
+                                return value;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    // Функция для отображения сообщения об отсутствии данных
+    function noDataMessage() {
+        const row = document.createElement('tr');
+        row.innerHTML = '<td colspan="3" class="text-center">Детальные данные о выручке и прибыли не найдены</td>';
+        detailedFinancialDataTable.appendChild(row);
+    }
+    
+    // Отображаем ссылки на официальные отчеты, если они есть
+    if (financeData["bo.nalog.ru"] && financeData["bo.nalog.ru"]["Отчет"]) {
+        officialReportsContainer.style.display = 'block';
+        const reports = financeData["bo.nalog.ru"]["Отчет"];
+        
+        // Сортируем отчеты по годам (по убыванию)
+        const sortedYears = Object.keys(reports).sort((a, b) => b - a);
+        
+        for (const year of sortedYears) {
+            const url = reports[year];
+            const link = document.createElement('a');
+            link.href = url;
+            link.className = 'list-group-item list-group-item-action';
+            link.target = '_blank';
+            link.innerHTML = `<i class="fas fa-file-pdf me-2"></i> Отчет за ${year} год`;
+            officialReportsList.appendChild(link);
+        }
+    }
+}
+
+// Функция для отображения ошибки
+function showError(message) {
+    const errorElement = document.getElementById('search-error');
+    document.getElementById('error-message').textContent = message;
+    errorElement.style.display = 'block';
+    document.getElementById('search-results').style.display = 'none';
+    document.getElementById('search-placeholder').style.display = 'block';
+}
+</script>
+{% endblock %}
