@@ -1,0 +1,357 @@
+/* Основные стили для приложения */
+:root {
+    --primary-color: #007bff;
+    --primary-dark: #0056b3;
+    --secondary-color: #6c757d;
+    --success-color: #28a745;
+    --danger-color: #dc3545;
+    --warning-color: #ffc107;
+    --info-color: #17a2b8;
+    --text-light: #f8f9fa;
+    --text-dark: #212529;
+    --text-muted: #6c757d;
+    --background-light: #ffffff;
+    --background-dark: #343a40;
+    --border-color: rgba(0, 0, 0, 0.1);
+    --card-bg-light: #ffffff;
+    --card-bg-dark: #2c3136;
+}
+
+body {
+    background-color: var(--background-light);
+    color: var(--text-dark);
+    min-height: 100vh;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+body.dark-mode {
+    background-color: var(--background-dark);
+    color: var(--text-light);
+}
+
+.navbar {
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.card {
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    background-color: var(--card-bg-light);
+    transition: background-color 0.3s, border-color 0.3s;
+}
+
+body.dark-mode .card {
+    background-color: var(--card-bg-dark);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.card-header {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    padding: 0.75rem 1.25rem;
+    background-color: rgba(0, 0, 0, 0.03);
+}
+
+body.dark-mode .card-header {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Стили для страницы парсера новостей */
+.news-item {
+    border-radius: 8px;
+    background-color: var(--card-bg-light);
+    padding: 15px;
+    margin-bottom: 12px;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+body.dark-mode .news-item {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.news-item:hover {
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.1);
+    border-color: rgba(0, 123, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+body.dark-mode .news-item:hover {
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.3);
+    border-color: rgba(0, 123, 255, 0.4);
+}
+
+.news-date {
+    color: var(--text-muted);
+    min-width: 100px;
+    display: inline-block;
+    font-size: 0.9rem;
+}
+
+body.dark-mode .news-date {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.news-title {
+    color: var(--text-dark);
+    font-weight: 500;
+    text-decoration: none;
+    line-height: 1.4;
+}
+
+body.dark-mode .news-title {
+    color: var(--text-light);
+}
+
+.news-title:hover {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+.news-title .fa-external-link-alt {
+    opacity: 0.6;
+    font-size: 0.8em;
+    transition: opacity 0.2s;
+}
+
+.news-title:hover .fa-external-link-alt {
+    opacity: 1;
+}
+
+/* Кастомные стили вкладок */
+.nav-tabs .nav-link {
+    color: var(--text-dark);
+    font-weight: 500;
+    padding: 0.75rem 1rem;
+    border-radius: 0;
+    border: none;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+}
+
+body.dark-mode .nav-tabs .nav-link {
+    color: var(--text-light);
+}
+
+.nav-tabs .nav-link:hover {
+    border-bottom-color: rgba(0, 123, 255, 0.3);
+}
+
+.nav-tabs .nav-link.active {
+    color: var(--primary-color);
+    font-weight: 600;
+    border-bottom-color: var(--primary-color);
+    background-color: transparent;
+}
+
+.nav-tabs .badge {
+    margin-left: 5px;
+    font-weight: normal;
+    font-size: 0.75rem;
+    vertical-align: middle;
+}
+
+/* Стили для кнопок */
+.btn {
+    font-weight: 500;
+    border-radius: 5px;
+    padding: 0.5rem 1rem;
+    transition: all 0.2s;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-dark);
+    border-color: var(--primary-dark);
+    box-shadow: 0 2px 8px rgba(0, 105, 217, 0.3);
+}
+
+.btn-success {
+    background-color: var(--success-color);
+    border-color: var(--success-color);
+}
+
+.btn-success:hover {
+    background-color: #218838;
+    border-color: #1e7e34;
+    box-shadow: 0 2px 8px rgba(33, 136, 56, 0.3);
+}
+
+/* Стили для форм */
+.form-group label {
+    font-weight: 500;
+    color: var(--text-dark);
+    margin-bottom: 0.5rem;
+}
+
+body.dark-mode .form-group label {
+    color: var(--text-light);
+}
+
+.form-control {
+    border-radius: 5px;
+    border: 1px solid #ced4da;
+    padding: 0.5rem 0.75rem;
+    transition: all 0.2s;
+    background-color: var(--background-light);
+    color: var(--text-dark);
+}
+
+body.dark-mode .form-control {
+    background-color: #3a4047;
+    color: var(--text-light);
+    border-color: #495057;
+}
+
+.form-control:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+body.dark-mode .form-control:focus {
+    background-color: #3a4047;
+    color: var(--text-light);
+}
+
+/* Стили для анимации загрузки */
+.spinner-border {
+    width: 3rem;
+    height: 3rem;
+}
+
+body.dark-mode .text-muted {
+    color: rgba(255, 255, 255, 0.7) !important;
+}
+
+/* Стили для профиля пользователя */
+.profile-img {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #fff;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Адаптивные стили */
+@media (max-width: 767.98px) {
+    .news-item {
+        padding: 10px;
+    }
+    
+    .news-date {
+        display: block;
+        margin-bottom: 5px;
+    }
+    
+    .btn {
+        padding: 0.5rem 0.75rem;
+    }
+    
+    .card-body {
+        padding: 1rem;
+    }
+}
+
+/* Стили для всплывающих уведомлений (toast) */
+.copy-toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background-color: #333;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    z-index: 1060;
+    opacity: 0;
+    transform: translateY(-20px);
+    transition: all 0.3s ease;
+    max-width: 300px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    font-size: 14px;
+    text-align: center;
+}
+
+.copy-toast-show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Стили для уведомлений */
+.alert {
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.alert-success {
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+    color: #155724;
+}
+
+.alert-danger {
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+    color: #721c24;
+}
+
+.alert-warning {
+    background-color: #fff3cd;
+    border-color: #ffeeba;
+    color: #856404;
+}
+
+.alert-info {
+    background-color: #d1ecf1;
+    border-color: #bee5eb;
+    color: #0c5460;
+}
+
+body.dark-mode .alert-success {
+    background-color: #3c763d;
+    color: #fff;
+    border-color: #2b542c;
+}
+
+body.dark-mode .alert-danger {
+    background-color: #a94442;
+    color: #fff;
+    border-color: #8b2e2b;
+}
+
+body.dark-mode .alert-warning {
+    background-color: #8a6d3b;
+    color: #fff;
+    border-color: #7d6224;
+}
+
+body.dark-mode .alert-info {
+    background-color: #204d74;
+    color: #fff;
+    border-color: #1b3f5f;
+}
+
+/* Стили для темной темы в элементах взаимодействия */
+body.dark-mode .text-primary {
+    color: #4dabf5 !important;
+}
+
+body.dark-mode .badge-primary {
+    background-color: #4dabf5;
+}
+
+body.dark-mode .btn-primary {
+    background-color: #4dabf5;
+    border-color: #4dabf5;
+}
+
+body.dark-mode .btn-success {
+    background-color: #5cb85c;
+    border-color: #5cb85c;
+} 
